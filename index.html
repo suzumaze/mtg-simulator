@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTG Simulator</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <!-- Auth Gate -->
+  <div id="auth-gate">
+    <h1>MTG Simulator</h1>
+    <div class="auth-form">
+      <input type="password" id="passphrase-input" placeholder="パスフレーズを入力">
+      <button id="auth-btn">入室</button>
+      <p id="auth-error" class="hidden">パスフレーズが違います</p>
+    </div>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobby" class="hidden">
+    <h1>MTG Simulator</h1>
+    <div id="connection-section">
+      <div id="host-section">
+        <button id="create-game-btn">ゲームを作成</button>
+        <div id="invite-section" class="hidden">
+          <p>招待URLを相手に共有してください:</p>
+          <input type="text" id="invite-url" readonly>
+          <button id="copy-url-btn">コピー</button>
+          <p id="connection-status">接続待ち...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deck Input (shown after connection) -->
+    <div id="deck-section" class="hidden">
+      <h2>デッキリスト</h2>
+      <textarea id="deck-input" rows="15" placeholder="4 Lightning Bolt
+4 Mountain
+..."></textarea>
+      <button id="load-deck-btn">デッキを読み込む</button>
+      <div id="deck-status"></div>
+      <div id="waiting-opponent" class="hidden">相手のデッキ準備を待っています...</div>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game" class="hidden">
+    <!-- Opponent Info Bar -->
+    <div id="opponent-info" class="player-info">
+      <span class="player-name" id="opponent-name">Opponent</span>
+      <span class="life-display">Life: <span id="opponent-life">20</span></span>
+      <span class="poison-display">Poison: <span id="opponent-poison">0</span></span>
+      <span>Library: <span id="opponent-library-count">0</span></span>
+      <span>Hand: <span id="opponent-hand-count">0</span></span>
+    </div>
+
+    <!-- Opponent Battlefield -->
+    <div id="opponent-battlefield" class="zone battlefield" data-zone="battlefield" data-player="opponent">
+    </div>
+
+    <!-- Opponent GY / Exile -->
+    <div class="zone-row">
+      <div id="opponent-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="opponent">
+        <span class="zone-label">GY: <span id="opponent-gy-count">0</span></span>
+      </div>
+      <div id="opponent-exile-zone" class="zone-small" data-zone="exile" data-player="opponent">
+        <span class="zone-label">Exile: <span id="opponent-exile-count">0</span></span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="board-divider"></div>
+
+    <!-- My Battlefield -->
+    <div id="my-battlefield" class="zone battlefield" data-zone="battlefield" data-player="self">
+    </div>
+
+    <!-- My Zones + Actions + Chat -->
+    <div class="bottom-bar">
+      <div id="my-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="self">
+        <span class="zone-label">GY: <span id="my-gy-count">0</span></span>
+      </div>
+      <div id="my-exile-zone" class="zone-small" data-zone="exile" data-player="self">
+        <span class="zone-label">Exile: <span id="my-exile-count">0</span></span>
+      </div>
+      <div id="my-library-zone" class="zone-small" data-zone="library" data-player="self">
+        <span class="zone-label">Library: <span id="my-library-count">0</span></span>
+      </div>
+      <div id="actions-panel">
+        <div class="life-controls">
+          <span>Life: <span id="my-life">20</span></span>
+          <button class="life-btn" data-delta="-1">-1</button>
+          <button class="life-btn" data-delta="+1">+1</button>
+          <button class="life-btn" data-delta="-5">-5</button>
+          <button class="life-btn" data-delta="+5">+5</button>
+        </div>
+        <div class="poison-controls">
+          <span>Poison: <span id="my-poison">0</span></span>
+          <button class="poison-btn" data-delta="+1">+1</button>
+          <button class="poison-btn" data-delta="-1">-1</button>
+        </div>
+        <div class="action-buttons">
+          <button id="draw-btn">ドロー</button>
+          <button id="shuffle-btn">シャッフル</button>
+          <button id="mulligan-btn">マリガン</button>
+          <button id="token-btn">トークン</button>
+          <button id="roll-btn">ダイス</button>
+          <button id="coin-btn">コイン</button>
+          <button id="untap-all-btn">全アンタップ</button>
+        </div>
+      </div>
+      <div id="chat-panel">
+        <div id="chat-log"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="チャット...">
+          <button id="chat-send-btn">送信</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Hand -->
+    <div id="my-hand" class="zone hand" data-zone="hand" data-player="self">
+    </div>
+
+    <!-- Zone Viewer Modal -->
+    <div id="zone-viewer" class="hidden">
+      <div id="zone-viewer-content">
+        <h3 id="zone-viewer-title"></h3>
+        <div id="zone-viewer-cards"></div>
+        <button id="zone-viewer-close">閉じる</button>
+      </div>
+    </div>
+
+    <!-- Token Modal -->
+    <div id="token-modal" class="hidden">
+      <div class="modal-content">
+        <h3>トークン生成</h3>
+        <label>名前: <input type="text" id="token-name" value="Token"></label>
+        <label>P/T: <input type="text" id="token-pt" value="1/1"></label>
+        <button id="token-create-btn">生成</button>
+        <button id="token-cancel-btn">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- Dice Modal -->
+    <div id="dice-modal" class="hidden">
+      <div class="modal-content">
+        <h3>ダイスロール</h3>
+        <label>面数: <input type="number" id="dice-sides" value="6" min="2" max="100"></label>
+        <button id="dice-roll-btn">ロール</button>
+        <button id="dice-cancel-btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
