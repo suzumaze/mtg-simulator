@@ -26,7 +26,7 @@ function shuffle(arr) {
   return arr;
 }
 
-export function initGame(myCards, opponentCards) {
+export function initGame(myCards, opponentCards, mySideboard, opponentSideboard) {
   const cards = {};
 
   const myLibrary = [];
@@ -37,6 +37,15 @@ export function initGame(myCards, opponentCards) {
   }
   shuffle(myLibrary);
 
+  const mySB = [];
+  if (mySideboard) {
+    for (const c of mySideboard) {
+      const id = genId();
+      cards[id] = { name: c.name, imageUrl: c.imageUrl, oracleText: c.oracleText, typeLine: c.typeLine };
+      mySB.push(id);
+    }
+  }
+
   const oppLibrary = [];
   for (const c of opponentCards) {
     const id = genId();
@@ -44,6 +53,15 @@ export function initGame(myCards, opponentCards) {
     oppLibrary.push(id);
   }
   shuffle(oppLibrary);
+
+  const oppSB = [];
+  if (opponentSideboard) {
+    for (const c of opponentSideboard) {
+      const id = genId();
+      cards[id] = { name: c.name, imageUrl: c.imageUrl, oracleText: c.oracleText, typeLine: c.typeLine };
+      oppSB.push(id);
+    }
+  }
 
   const selfRole = getIsHost() ? 'host' : 'guest';
   const oppRole = getIsHost() ? 'guest' : 'host';
@@ -59,6 +77,7 @@ export function initGame(myCards, opponentCards) {
         battlefield: [],
         graveyard: [],
         exile: [],
+        sideboard: mySB,
       },
       [oppRole]: {
         name: 'Opponent',
@@ -69,6 +88,7 @@ export function initGame(myCards, opponentCards) {
         battlefield: [],
         graveyard: [],
         exile: [],
+        sideboard: oppSB,
       },
     },
     cards,
@@ -152,9 +172,9 @@ export function processAction(role, type, payload) {
       break;
     }
     case 'move_card': {
-      const { cardId, from, to, index } = payload;
+      const { cardId, from, to, index, tapped, faceDown } = payload;
       removeCardFromZone(role, from, cardId);
-      addCardToZone(role, to, cardId, index);
+      addCardToZone(role, to, cardId, index, { tapped, faceDown });
       broadcastAction(role, type, payload);
       break;
     }
@@ -244,8 +264,63 @@ export function processAction(role, type, payload) {
       broadcastAction(role, type, payload);
       break;
     }
+    case 'scry_resolve': {
+      // Put selected cards on top (in order) and bottom
+      const { top, bottom } = payload;
+      // Remove scried cards from library top
+      const allScried = [...top, ...bottom];
+      player.library = player.library.filter(id => !allScried.includes(id));
+      // Put top cards back on top (first in array = first to draw)
+      player.library.unshift(...top);
+      // Put bottom cards at bottom
+      player.library.push(...bottom);
+      broadcastAction(role, type, { count: allScried.length });
+      break;
+    }
+    case 'search_library': {
+      const { cardId: searchCardId, to: searchTo } = payload;
+      removeCardFromZone(role, 'library', searchCardId);
+      addCardToZone(role, searchTo, searchCardId);
+      shuffle(player.library);
+      broadcastAction(role, type, {});
+      break;
+    }
+    case 'clone_card': {
+      const sourceCard = gameState.cards[payload.cardId];
+      if (sourceCard) {
+        const cloneId = genId();
+        gameState.cards[cloneId] = { ...sourceCard, isToken: true };
+        player.battlefield.push({
+          cardId: cloneId,
+          tapped: false,
+          faceDown: false,
+          counters: {},
+        });
+      }
+      broadcastAction(role, type, payload);
+      break;
+    }
+    case 'phase': {
+      const phaseEntry = player.battlefield.find(e =>
+        (typeof e === 'object' ? e.cardId : e) === payload.cardId
+      );
+      if (phaseEntry && typeof phaseEntry === 'object') {
+        phaseEntry.phasedOut = !phaseEntry.phasedOut;
+      }
+      broadcastAction(role, type, payload);
+      break;
+    }
+    case 'set_note': {
+      const noteEntry = player.battlefield.find(e =>
+        (typeof e === 'object' ? e.cardId : e) === payload.cardId
+      );
+      if (noteEntry && typeof noteEntry === 'object') {
+        noteEntry.note = payload.note || '';
+      }
+      broadcastAction(role, type, payload);
+      break;
+    }
     case 'load_deck': {
-      // Guest sends deck data to host
       const cards = payload.cards;
       const lib = [];
       for (const c of cards) {
@@ -259,6 +334,14 @@ export function processAction(role, type, payload) {
       player.battlefield = [];
       player.graveyard = [];
       player.exile = [];
+      player.sideboard = [];
+      if (payload.sideboard) {
+        for (const c of payload.sideboard) {
+          const id = genId();
+          gameState.cards[id] = { name: c.name, imageUrl: c.imageUrl, oracleText: c.oracleText, typeLine: c.typeLine };
+          player.sideboard.push(id);
+        }
+      }
       drawCards(role, 7);
       broadcastAction(role, type, {});
       break;
@@ -293,7 +376,7 @@ function removeCardFromZone(role, zoneName, cardId) {
   }
 }
 
-function addCardToZone(role, zoneName, cardId, index) {
+function addCardToZone(role, zoneName, cardId, index, opts = {}) {
   const player = gameState.players[role];
   const zone = player[zoneName];
   if (!zone) return;
@@ -301,8 +384,8 @@ function addCardToZone(role, zoneName, cardId, index) {
   if (zoneName === 'battlefield') {
     zone.push({
       cardId,
-      tapped: false,
-      faceDown: false,
+      tapped: opts.tapped || false,
+      faceDown: opts.faceDown || false,
       counters: {},
     });
   } else if (zoneName === 'library') {
@@ -327,8 +410,10 @@ export function handleMessage(msg) {
         processAction(oppR, 'load_deck', msg.payload);
         break;
       case 'chat':
-        // Show to host locally
         if (onStateChange) onStateChange('chat', { playerName: 'Opponent', text: msg.payload.text });
+        break;
+      case 'reveal':
+        if (onStateChange) onStateChange('reveal', msg.payload);
         break;
       case 'roll': {
         const rollResult = Math.floor(Math.random() * (msg.payload.sides || 6)) + 1;
@@ -362,6 +447,9 @@ export function handleMessage(msg) {
       case 'system':
         if (onStateChange) onStateChange('system', msg.payload);
         break;
+      case 'reveal':
+        if (onStateChange) onStateChange('reveal', msg.payload);
+        break;
     }
   }
 }
@@ -393,6 +481,12 @@ function applyRemoteState(remoteState) {
   };
 
   if (onStateChange) onStateChange();
+}
+
+export function getLibraryTop(count) {
+  const me = getMyPlayer();
+  if (!me) return [];
+  return me.library.slice(0, Math.min(count, me.library.length));
 }
 
 export function mulliganCount() {

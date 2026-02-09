@@ -2,8 +2,8 @@
 
 import { createGame, joinGame, sendMessage, setOnMessage, setOnConnected, getIsHost } from './connection.js';
 import { parseDeckList, fetchCards, buildDeck } from './deck.js';
-import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer } from './game.js';
-import { renderBoard, renderZoneViewer, closeZoneViewer, addChatMessage, addSystemMessage } from './board.js';
+import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer, getLibraryTop } from './game.js';
+import { renderBoard, renderZoneViewer, closeZoneViewer, addChatMessage, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget } from './board.js';
 import { initDragDrop } from './drag.js';
 
 // ===== Auth Gate =====
@@ -34,7 +34,9 @@ document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
 
 // ===== State =====
 let myDeckCards = null;
+let mySideboardCards = null;
 let opponentDeckCards = null;
+let opponentSideboardCards = null;
 let myDeckReady = false;
 let opponentDeckReady = false;
 let mulliganCount = 0;
@@ -115,38 +117,40 @@ loadDeckBtn.addEventListener('click', async () => {
   deckStatus.textContent = 'カード情報を取得中...';
 
   try {
-    const entries = parseDeckList(text);
-    if (entries.length === 0) {
+    const { main: mainEntries, sideboard: sbEntries } = parseDeckList(text);
+    if (mainEntries.length === 0) {
       deckStatus.textContent = 'カードが見つかりませんでした';
       loadDeckBtn.disabled = false;
       return;
     }
 
-    const { cardDataMap } = await fetchCards(entries, (pct) => {
+    const allEntries = [...mainEntries, ...sbEntries];
+    const { cardDataMap } = await fetchCards(allEntries, (pct) => {
       deckStatus.textContent = `取得中... ${pct}%`;
     });
 
-    const { cards, notFound } = buildDeck(entries, cardDataMap);
+    const { cards, notFound } = buildDeck(mainEntries, cardDataMap);
+    const { cards: sbCards } = buildDeck(sbEntries, cardDataMap);
 
+    const sbInfo = sbCards.length > 0 ? ` + SB ${sbCards.length}枚` : '';
     if (notFound.length > 0) {
-      deckStatus.textContent = `⚠ 見つからないカード: ${notFound.join(', ')} (${cards.length}枚読み込み済み)`;
+      deckStatus.textContent = `⚠ 見つからないカード: ${notFound.join(', ')} (${cards.length}枚${sbInfo}読み込み済み)`;
     } else {
-      deckStatus.textContent = `✓ ${cards.length}枚のデッキを読み込みました`;
+      deckStatus.textContent = `✓ ${cards.length}枚${sbInfo}のデッキを読み込みました`;
     }
 
     myDeckCards = cards;
+    mySideboardCards = sbCards;
     myDeckReady = true;
 
     if (getIsHost()) {
-      // Host waits for guest deck
       if (opponentDeckReady) {
         startGame();
       } else {
         waitingOpponent.classList.remove('hidden');
       }
     } else {
-      // Guest sends deck to host
-      sendMessage({ type: 'load_deck', payload: { cards } });
+      sendMessage({ type: 'load_deck', payload: { cards, sideboard: sbCards } });
       waitingOpponent.classList.remove('hidden');
     }
   } catch (err) {
@@ -158,8 +162,8 @@ loadDeckBtn.addEventListener('click', async () => {
 // ===== Message Handling =====
 setOnMessage((msg) => {
   if (msg.type === 'load_deck' && getIsHost()) {
-    // Host receives guest's deck
     opponentDeckCards = msg.payload.cards;
+    opponentSideboardCards = msg.payload.sideboard || [];
     opponentDeckReady = true;
 
     if (myDeckReady) {
@@ -183,6 +187,11 @@ setOnMessage((msg) => {
     return;
   }
 
+  if (msg.type === 'reveal') {
+    showRevealModal(msg.payload.cards);
+    return;
+  }
+
   if (msg.type === 'start_game' && !getIsHost()) {
     // Guest receives start signal — switch to game screen
     showGameScreen();
@@ -203,12 +212,15 @@ setOnStateChange((eventType, eventData) => {
     addSystemMessage(eventData.text);
     return;
   }
+  if (eventType === 'reveal') {
+    showRevealModal(eventData.cards);
+    return;
+  }
   renderBoard();
 });
 
 function startGame() {
-  // Host initializes game state
-  initGame(myDeckCards, opponentDeckCards);
+  initGame(myDeckCards, opponentDeckCards, mySideboardCards, opponentSideboardCards);
 
   // Tell guest to start
   sendMessage({ type: 'start_game', payload: {} });
@@ -361,3 +373,98 @@ document.getElementById('opponent-exile-zone').addEventListener('click', () => {
 });
 
 document.getElementById('zone-viewer-close').addEventListener('click', closeZoneViewer);
+
+// Sideboard viewer
+document.getElementById('my-sideboard-zone').addEventListener('click', () => {
+  const me = getMyPlayer();
+  const state = getState();
+  if (me && state) renderZoneViewer('サイドボード', me.sideboard || [], state.cards, 'sideboard');
+});
+
+// Scry
+document.getElementById('scry-btn').addEventListener('click', () => {
+  document.getElementById('scry-modal').classList.remove('hidden');
+});
+
+document.getElementById('scry-cancel-btn').addEventListener('click', () => {
+  document.getElementById('scry-modal').classList.add('hidden');
+});
+
+document.getElementById('scry-start-btn').addEventListener('click', () => {
+  const count = parseInt(document.getElementById('scry-count').value, 10) || 1;
+  document.getElementById('scry-modal').classList.add('hidden');
+  const topCards = getLibraryTop(count);
+  const state = getState();
+  if (topCards.length > 0 && state) {
+    openScryViewer(topCards, state.cards);
+  }
+});
+
+document.getElementById('scry-confirm-btn').addEventListener('click', () => {
+  const { top, bottom } = getScryResult();
+  sendAction('scry_resolve', { top, bottom });
+  closeScryViewer();
+  addSystemMessage(`Scry ${top.length + bottom.length}: トップ${top.length}枚, ボトム${bottom.length}枚`);
+});
+
+// Library Search
+document.getElementById('search-btn').addEventListener('click', () => {
+  const me = getMyPlayer();
+  const state = getState();
+  if (me && state && me.library.length > 0) {
+    openSearchViewer(me.library, state.cards);
+  }
+});
+
+document.getElementById('search-viewer-close').addEventListener('click', () => {
+  closeSearchViewer();
+  sendAction('shuffle', {});
+  addSystemMessage('ライブラリーをシャッフルしました');
+});
+
+// Reveal modal close
+document.getElementById('reveal-modal-close').addEventListener('click', closeRevealModal);
+
+// Counter modal
+let selectedCounterType = '+1/+1';
+
+for (const btn of document.querySelectorAll('.counter-type-btn')) {
+  btn.addEventListener('click', () => {
+    selectedCounterType = btn.dataset.type;
+    for (const b of document.querySelectorAll('.counter-type-btn')) b.classList.remove('selected');
+    btn.classList.add('selected');
+  });
+}
+
+document.getElementById('counter-add-btn').addEventListener('click', () => {
+  const cardId = getCounterTargetCardId();
+  const custom = document.getElementById('counter-custom-type').value.trim();
+  const type = custom || selectedCounterType;
+  if (cardId) sendAction('add_counter', { cardId, type, delta: 1 });
+});
+
+document.getElementById('counter-remove-btn').addEventListener('click', () => {
+  const cardId = getCounterTargetCardId();
+  const custom = document.getElementById('counter-custom-type').value.trim();
+  const type = custom || selectedCounterType;
+  if (cardId) sendAction('add_counter', { cardId, type, delta: -1 });
+});
+
+document.getElementById('counter-cancel-btn').addEventListener('click', () => {
+  document.getElementById('counter-modal').classList.add('hidden');
+  resetCounterTarget();
+});
+
+// Note modal
+document.getElementById('note-save-btn').addEventListener('click', () => {
+  const cardId = getNoteTargetCardId();
+  const note = document.getElementById('note-input').value.trim();
+  if (cardId) sendAction('set_note', { cardId, note });
+  document.getElementById('note-modal').classList.add('hidden');
+  resetNoteTarget();
+});
+
+document.getElementById('note-cancel-btn').addEventListener('click', () => {
+  document.getElementById('note-modal').classList.add('hidden');
+  resetNoteTarget();
+});

@@ -8,6 +8,7 @@ const dropZoneMap = {
   'my-graveyard-zone': 'graveyard',
   'my-exile-zone': 'exile',
   'my-library-zone': 'library',
+  'my-sideboard-zone': 'sideboard',
 };
 
 export function initDragDrop() {

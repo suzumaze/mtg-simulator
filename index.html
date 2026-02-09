@@ -38,6 +38,9 @@
       <h2>デッキリスト</h2>
       <textarea id="deck-input" rows="15" placeholder="4 Lightning Bolt
 4 Mountain
+
+Sideboard:
+2 Pyroblast
 ..."></textarea>
       <button id="load-deck-btn">デッキを読み込む</button>
       <div id="deck-status"></div>
@@ -88,6 +91,9 @@
       <div id="my-library-zone" class="zone-small" data-zone="library" data-player="self">
         <span class="zone-label">Library: <span id="my-library-count">0</span></span>
       </div>
+      <div id="my-sideboard-zone" class="zone-small" data-zone="sideboard" data-player="self">
+        <span class="zone-label">SB: <span id="my-sb-count">0</span></span>
+      </div>
       <div id="actions-panel">
         <div class="life-controls">
           <span>Life: <span id="my-life">20</span></span>
@@ -105,6 +111,8 @@
           <button id="draw-btn">ドロー</button>
           <button id="shuffle-btn">シャッフル</button>
           <button id="mulligan-btn">マリガン</button>
+          <button id="scry-btn">Scry</button>
+          <button id="search-btn">検索</button>
           <button id="token-btn">トークン</button>
           <button id="roll-btn">ダイス</button>
           <button id="coin-btn">コイン</button>
@@ -151,6 +159,82 @@
         <label>面数: <input type="number" id="dice-sides" value="6" min="2" max="100"></label>
         <button id="dice-roll-btn">ロール</button>
         <button id="dice-cancel-btn">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- Scry Modal -->
+    <div id="scry-modal" class="hidden">
+      <div class="modal-content">
+        <h3>Scry</h3>
+        <label>枚数: <input type="number" id="scry-count" value="1" min="1" max="20"></label>
+        <button id="scry-start-btn">確認</button>
+        <button id="scry-cancel-btn">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- Scry Viewer -->
+    <div id="scry-viewer" class="hidden">
+      <div id="scry-viewer-content">
+        <h3>Scry — トップに残すカードを選択</h3>
+        <p class="scry-hint">クリックでトップ/ボトムを切り替え。トップ内の順序はドラッグで変更。</p>
+        <div class="scry-sections">
+          <div class="scry-section">
+            <h4>トップ（上が先にドロー）</h4>
+            <div id="scry-top-cards" class="scry-card-list"></div>
+          </div>
+          <div class="scry-section">
+            <h4>ボトム</h4>
+            <div id="scry-bottom-cards" class="scry-card-list"></div>
+          </div>
+        </div>
+        <button id="scry-confirm-btn">確定</button>
+      </div>
+    </div>
+
+    <!-- Library Search Viewer -->
+    <div id="search-viewer" class="hidden">
+      <div id="search-viewer-content">
+        <h3>ライブラリー検索</h3>
+        <div id="search-viewer-cards"></div>
+        <button id="search-viewer-close">閉じる（シャッフル）</button>
+      </div>
+    </div>
+
+    <!-- Reveal Modal -->
+    <div id="reveal-modal" class="hidden">
+      <div id="reveal-modal-content">
+        <h3 id="reveal-modal-title">公開されたカード</h3>
+        <div id="reveal-modal-cards"></div>
+        <button id="reveal-modal-close">閉じる</button>
+      </div>
+    </div>
+
+    <!-- Counter Type Modal -->
+    <div id="counter-modal" class="hidden">
+      <div class="modal-content">
+        <h3>カウンター</h3>
+        <div class="counter-type-buttons">
+          <button class="counter-type-btn" data-type="+1/+1">+1/+1</button>
+          <button class="counter-type-btn" data-type="-1/-1">-1/-1</button>
+          <button class="counter-type-btn" data-type="loyalty">忠誠度</button>
+          <button class="counter-type-btn" data-type="charge">蓄積</button>
+        </div>
+        <label>その他: <input type="text" id="counter-custom-type" placeholder="種別名"></label>
+        <div class="counter-delta-buttons">
+          <button id="counter-add-btn">+1</button>
+          <button id="counter-remove-btn">-1</button>
+        </div>
+        <button id="counter-cancel-btn">閉じる</button>
+      </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="hidden">
+      <div class="modal-content">
+        <h3>メモ</h3>
+        <input type="text" id="note-input" placeholder="注釈を入力...">
+        <button id="note-save-btn">保存</button>
+        <button id="note-cancel-btn">キャンセル</button>
       </div>
     </div>
   </div>

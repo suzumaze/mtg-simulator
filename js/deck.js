@@ -2,20 +2,34 @@
 
 export function parseDeckList(text) {
   const lines = text.trim().split('\n');
-  const entries = [];
+  const main = [];
+  const sideboard = [];
+  let inSideboard = false;
+
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
-    // Match: optional count, then card name
-    // Formats: "4 Lightning Bolt", "4x Lightning Bolt", "Lightning Bolt"
-    const match = trimmed.match(/^(\d+)\s*x?\s+(.+)$/i);
-    if (match) {
-      entries.push({ count: parseInt(match[1], 10), name: match[2].trim() });
-    } else {
-      entries.push({ count: 1, name: trimmed });
+
+    // Detect sideboard section
+    if (/^sideboard:?\s*$/i.test(trimmed)) {
+      inSideboard = true;
+      continue;
     }
+    // Empty line after main deck also starts sideboard (MTGO format)
+    if (trimmed === '') {
+      if (main.length > 0) inSideboard = true;
+      continue;
+    }
+
+    const match = trimmed.match(/^(\d+)\s*x?\s+(.+)$/i);
+    const entry = match
+      ? { count: parseInt(match[1], 10), name: match[2].trim() }
+      : { count: 1, name: trimmed };
+
+    (inSideboard ? sideboard : main).push(entry);
   }
-  return entries;
+
+  return { main, sideboard };
 }
 
 export async function fetchCards(entries, onProgress) {
