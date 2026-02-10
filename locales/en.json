@@ -1,0 +1,167 @@
+{
+  "title": "MTG Simulator",
+  "auth": {
+    "placeholder": "Enter passphrase",
+    "enter": "Enter",
+    "error": "Incorrect passphrase"
+  },
+  "lobby": {
+    "createGame": "Create Game",
+    "shareInvite": "Share this invite URL with your opponent:",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "connectionWaiting": "Waiting for connection...",
+    "deckList": "Deck List",
+    "loadDeck": "Load Deck",
+    "waitingOpponent": "Waiting for opponent's deck..."
+  },
+  "connection": {
+    "connecting": "Connecting...",
+    "connected": "Connected!",
+    "joinedHost": "Connected to host",
+    "failed": "Connection failed",
+    "creating": "Creating...",
+    "error": "Error:"
+  },
+  "deck": {
+    "inputRequired": "Please enter a deck list",
+    "fetchingCards": "Fetching card data...",
+    "noCardsFound": "No cards found",
+    "fetching": "Fetching... {pct}%",
+    "sideboardFormat": " + SB {count}",
+    "warningMissing": "⚠ Cards not found: {names} ({count}{sbInfo} loaded)",
+    "loadedSuccess": "✓ Loaded {count}{sbInfo} cards",
+    "error": "Error: {msg}"
+  },
+  "game": {
+    "opponent": "Opponent",
+    "life": "Life:",
+    "poison": "Poison:",
+    "library": "Library:",
+    "hand": "Hand:",
+    "graveyard": "GY:",
+    "exile": "Exile:",
+    "sideboard": "SB:",
+    "draw": "Draw",
+    "shuffle": "Shuffle",
+    "mulligan": "Mulligan",
+    "scry": "Scry",
+    "search": "Search",
+    "token": "Token",
+    "dice": "Dice",
+    "coin": "Coin",
+    "untapAll": "Untap All",
+    "chatPlaceholder": "Chat...",
+    "send": "Send",
+    "close": "Close"
+  },
+  "player": {
+    "you": "You",
+    "opponent": "Opponent"
+  },
+  "zone": {
+    "graveyard": "Graveyard",
+    "exile": "Exile",
+    "sideboard": "Sideboard",
+    "opponentGraveyard": "Opponent's Graveyard",
+    "opponentExile": "Opponent's Exile"
+  },
+  "context": {
+    "tapUntap": "Tap/Untap",
+    "flip": "Flip",
+    "phaseOut": "Phase Out",
+    "counter": "Counter...",
+    "clone": "Create Copy",
+    "note": "Note",
+    "toHand": "→ Hand",
+    "toBattlefield": "→ Battlefield",
+    "toBattlefieldTapped": "→ Battlefield (Tapped)",
+    "toBattlefieldFaceDown": "→ Battlefield (Face Down)",
+    "toGraveyard": "→ Graveyard",
+    "toExile": "→ Exile",
+    "toLibraryTop": "→ Library Top",
+    "toLibraryBottom": "→ Library Bottom",
+    "reveal": "Reveal to Opponent",
+    "viewCard": "View Card"
+  },
+  "modal": {
+    "token": {
+      "title": "Create Token",
+      "name": "Name:",
+      "pt": "P/T:",
+      "create": "Create",
+      "cancel": "Cancel"
+    },
+    "dice": {
+      "title": "Dice Roll",
+      "sides": "Sides:",
+      "roll": "Roll",
+      "cancel": "Cancel"
+    },
+    "scry": {
+      "title": "Scry",
+      "count": "Count:",
+      "confirm": "OK",
+      "cancel": "Cancel",
+      "selectTop": "Scry — Select cards to keep on top",
+      "hint": "Click to toggle top/bottom. Drag to reorder within top.",
+      "top": "Top (drawn first)",
+      "bottom": "Bottom",
+      "done": "Confirm"
+    },
+    "search": {
+      "title": "Library Search",
+      "closeAndShuffle": "Close (Shuffle)"
+    },
+    "reveal": {
+      "title": "Revealed Cards",
+      "close": "Close"
+    },
+    "counter": {
+      "title": "Counter",
+      "loyalty": "Loyalty",
+      "charge": "Charge",
+      "custom": "Other:",
+      "customPlaceholder": "Type name",
+      "close": "Close"
+    },
+    "note": {
+      "title": "Note",
+      "placeholder": "Enter annotation...",
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "turn": {
+    "label": "Turn {num}",
+    "activePlayer": "Active: {name}",
+    "priority": "Priority: {name}",
+    "passPriority": "Pass Priority",
+    "nextTurn": "Next Turn",
+    "untap": "Untap",
+    "upkeep": "Upkeep",
+    "draw": "Draw",
+    "main1": "Main 1",
+    "combat_begin": "Begin Combat",
+    "combat_attackers": "Attackers",
+    "combat_blockers": "Blockers",
+    "combat_damage": "Damage",
+    "combat_end": "End Combat",
+    "main2": "Main 2",
+    "end_step": "End Step",
+    "cleanup": "Cleanup"
+  },
+  "system": {
+    "shuffled": "Library shuffled",
+    "mulligan": "Mulligan: draw {count}",
+    "revealCard": "Revealed: {name}",
+    "searchLibrary": "Searched library",
+    "scryResolved": "Scry {total}: {top} to top, {bottom} to bottom",
+    "diceRolled": "Rolled d{sides}: {result}",
+    "opponentDiceRolled": "Opponent rolled d{sides}: {result}",
+    "coinHeads": "Heads",
+    "coinTails": "Tails",
+    "coinFlip": "Coin flip: {result}",
+    "opponentCoinFlip": "Opponent coin flip: {result}"
+  }
+}

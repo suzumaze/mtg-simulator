@@ -5,6 +5,22 @@ import { parseDeckList, fetchCards, buildDeck } from './deck.js';
 import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer, getLibraryTop } from './game.js';
 import { renderBoard, renderZoneViewer, closeZoneViewer, addChatMessage, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget } from './board.js';
 import { initDragDrop } from './drag.js';
+import { playTap, playDraw, playShuffle, playLifeChange, playDice, playCoin, toggleMute, isMuted } from './sound.js';
+import { setLocale, applyI18nToDOM, t, tf } from './i18n.js';
+
+// ===== i18n =====
+const savedLang = localStorage.getItem('mtg-lang') || 'ja';
+const langSelect = document.getElementById('lang-select');
+langSelect.value = savedLang;
+
+setLocale(savedLang).then(() => applyI18nToDOM());
+
+langSelect.addEventListener('change', async () => {
+  const lang = langSelect.value;
+  localStorage.setItem('mtg-lang', lang);
+  await setLocale(lang);
+  applyI18nToDOM();
+});
 
 // ===== Auth Gate =====
 const PASSPHRASE_HASH = '2605313bb00abca41065d79008856c1de17d0bb0a63d55f53df2614487c044d0';
@@ -62,26 +78,26 @@ const peerParam = urlParams.get('peer');
 function initLobby() {
   if (peerParam) {
     // Guest mode — auto-join
-    createGameBtn.textContent = '接続中...';
+    createGameBtn.textContent = t('connection.connecting');
     createGameBtn.disabled = true;
 
     joinGame(peerParam).then(() => {
-      connectionStatus.textContent = '接続完了!';
+      connectionStatus.textContent = t('connection.connected');
       createGameBtn.classList.add('hidden');
       inviteSection.classList.remove('hidden');
-      inviteSection.querySelector('p').textContent = 'ホストに接続しました';
+      inviteSection.querySelector('p').textContent = t('connection.joinedHost');
       inviteUrlInput.classList.add('hidden');
       copyUrlBtn.classList.add('hidden');
       deckSection.classList.remove('hidden');
     }).catch((err) => {
-      createGameBtn.textContent = '接続失敗';
-      connectionStatus.textContent = `エラー: ${err}`;
+      createGameBtn.textContent = t('connection.failed');
+      connectionStatus.textContent = `${t('connection.error')} ${err}`;
     });
   } else {
     // Host mode
     createGameBtn.addEventListener('click', async () => {
       createGameBtn.disabled = true;
-      createGameBtn.textContent = '作成中...';
+      createGameBtn.textContent = t('connection.creating');
 
       const { inviteUrl } = await createGame(connectionStatus);
       inviteUrlInput.value = inviteUrl;
@@ -95,48 +111,48 @@ function initLobby() {
 copyUrlBtn.addEventListener('click', () => {
   inviteUrlInput.select();
   navigator.clipboard.writeText(inviteUrlInput.value);
-  copyUrlBtn.textContent = 'コピー済!';
-  setTimeout(() => { copyUrlBtn.textContent = 'コピー'; }, 2000);
+  copyUrlBtn.textContent = t('lobby.copied');
+  setTimeout(() => { copyUrlBtn.textContent = t('lobby.copy'); }, 2000);
 });
 
 // Show deck section when peer connects (for host)
 setOnConnected(() => {
   deckSection.classList.remove('hidden');
-  connectionStatus.textContent = '接続完了!';
+  connectionStatus.textContent = t('connection.connected');
 });
 
 // ===== Deck Loading =====
 loadDeckBtn.addEventListener('click', async () => {
   const text = deckInput.value.trim();
   if (!text) {
-    deckStatus.textContent = 'デッキリストを入力してください';
+    deckStatus.textContent = t('deck.inputRequired');
     return;
   }
 
   loadDeckBtn.disabled = true;
-  deckStatus.textContent = 'カード情報を取得中...';
+  deckStatus.textContent = t('deck.fetchingCards');
 
   try {
     const { main: mainEntries, sideboard: sbEntries } = parseDeckList(text);
     if (mainEntries.length === 0) {
-      deckStatus.textContent = 'カードが見つかりませんでした';
+      deckStatus.textContent = t('deck.noCardsFound');
       loadDeckBtn.disabled = false;
       return;
     }
 
     const allEntries = [...mainEntries, ...sbEntries];
     const { cardDataMap } = await fetchCards(allEntries, (pct) => {
-      deckStatus.textContent = `取得中... ${pct}%`;
+      deckStatus.textContent = tf('deck.fetching', { pct });
     });
 
     const { cards, notFound } = buildDeck(mainEntries, cardDataMap);
     const { cards: sbCards } = buildDeck(sbEntries, cardDataMap);
 
-    const sbInfo = sbCards.length > 0 ? ` + SB ${sbCards.length}枚` : '';
+    const sbInfo = sbCards.length > 0 ? tf('deck.sideboardFormat', { count: sbCards.length }) : '';
     if (notFound.length > 0) {
-      deckStatus.textContent = `⚠ 見つからないカード: ${notFound.join(', ')} (${cards.length}枚${sbInfo}読み込み済み)`;
+      deckStatus.textContent = tf('deck.warningMissing', { names: notFound.join(', '), count: cards.length, sbInfo });
     } else {
-      deckStatus.textContent = `✓ ${cards.length}枚${sbInfo}のデッキを読み込みました`;
+      deckStatus.textContent = tf('deck.loadedSuccess', { count: cards.length, sbInfo });
     }
 
     myDeckCards = cards;
@@ -154,7 +170,7 @@ loadDeckBtn.addEventListener('click', async () => {
       waitingOpponent.classList.remove('hidden');
     }
   } catch (err) {
-    deckStatus.textContent = `エラー: ${err.message}`;
+    deckStatus.textContent = tf('deck.error', { msg: err.message });
     loadDeckBtn.disabled = false;
   }
 });
@@ -235,25 +251,45 @@ function showGameScreen() {
   renderBoard();
 }
 
+// ===== Turn/Phase Buttons =====
+document.getElementById('next-turn-btn').addEventListener('click', () => {
+  sendAction('next_turn', {});
+});
+
+document.getElementById('pass-priority-btn').addEventListener('click', () => {
+  sendAction('pass_priority', {});
+});
+
 // ===== Action Buttons =====
 document.getElementById('draw-btn').addEventListener('click', () => {
   sendAction('draw', { count: 1 });
+  playDraw();
 });
 
 document.getElementById('shuffle-btn').addEventListener('click', () => {
   sendAction('shuffle', {});
-  addSystemMessage('ライブラリーをシャッフルしました');
+  addSystemMessage(t('system.shuffled'));
+  playShuffle();
 });
 
 document.getElementById('mulligan-btn').addEventListener('click', () => {
   mulliganCount++;
   const drawCount = Math.max(1, 7 - mulliganCount + 1);
   sendAction('mulligan', { count: drawCount });
-  addSystemMessage(`マリガン: ${drawCount}枚ドロー`);
+  addSystemMessage(tf('system.mulligan', { count: drawCount }));
+  playShuffle();
 });
 
 document.getElementById('untap-all-btn').addEventListener('click', () => {
   sendAction('untap_all', {});
+});
+
+// Mute toggle
+const muteBtn = document.getElementById('mute-btn');
+muteBtn.textContent = isMuted() ? '🔇' : '🔊';
+muteBtn.addEventListener('click', () => {
+  const nowMuted = toggleMute();
+  muteBtn.textContent = nowMuted ? '🔇' : '🔊';
 });
 
 // Life buttons
@@ -263,6 +299,7 @@ for (const btn of document.querySelectorAll('.life-btn')) {
     const me = getMyPlayer();
     if (me) {
       sendAction('set_life', { life: me.life + delta });
+      playLifeChange();
     }
   });
 }
@@ -307,23 +344,25 @@ document.getElementById('dice-roll-btn').addEventListener('click', () => {
   const sides = parseInt(document.getElementById('dice-sides').value, 10) || 6;
   if (getIsHost()) {
     const result = Math.floor(Math.random() * sides) + 1;
-    addSystemMessage(`d${sides}をロール: ${result}`);
-    sendMessage({ type: 'system', payload: { text: `相手がd${sides}をロール: ${result}` } });
+    addSystemMessage(tf('system.diceRolled', { sides, result }));
+    sendMessage({ type: 'system', payload: { text: tf('system.opponentDiceRolled', { sides, result }) } });
   } else {
     sendMessage({ type: 'roll', payload: { sides } });
   }
+  playDice();
   document.getElementById('dice-modal').classList.add('hidden');
 });
 
 // Coin flip
 document.getElementById('coin-btn').addEventListener('click', () => {
   if (getIsHost()) {
-    const result = Math.random() < 0.5 ? '表 (Heads)' : '裏 (Tails)';
-    addSystemMessage(`コインフリップ: ${result}`);
-    sendMessage({ type: 'system', payload: { text: `相手がコインフリップ: ${result}` } });
+    const result = Math.random() < 0.5 ? t('system.coinHeads') : t('system.coinTails');
+    addSystemMessage(tf('system.coinFlip', { result }));
+    sendMessage({ type: 'system', payload: { text: tf('system.opponentCoinFlip', { result }) } });
   } else {
     sendMessage({ type: 'coin', payload: {} });
   }
+  playCoin();
 });
 
 // Chat
@@ -339,10 +378,10 @@ function sendChat() {
   input.value = '';
 
   if (getIsHost()) {
-    addChatMessage('You', text);
-    sendMessage({ type: 'chat', payload: { playerName: 'Opponent', text } });
+    addChatMessage(t('player.you'), text);
+    sendMessage({ type: 'chat', payload: { playerName: t('player.opponent'), text } });
   } else {
-    addChatMessage('You', text);
+    addChatMessage(t('player.you'), text);
     sendMessage({ type: 'chat', payload: { text } });
   }
 }
@@ -351,25 +390,25 @@ function sendChat() {
 document.getElementById('my-graveyard-zone').addEventListener('click', () => {
   const me = getMyPlayer();
   const state = getState();
-  if (me && state) renderZoneViewer('墓地', me.graveyard, state.cards, 'graveyard');
+  if (me && state) renderZoneViewer(t('zone.graveyard'), me.graveyard, state.cards, 'graveyard');
 });
 
 document.getElementById('my-exile-zone').addEventListener('click', () => {
   const me = getMyPlayer();
   const state = getState();
-  if (me && state) renderZoneViewer('追放', me.exile, state.cards, 'exile');
+  if (me && state) renderZoneViewer(t('zone.exile'), me.exile, state.cards, 'exile');
 });
 
 document.getElementById('opponent-graveyard-zone').addEventListener('click', () => {
   const opp = getOpponentPlayer();
   const state = getState();
-  if (opp && state) renderZoneViewer('相手の墓地', opp.graveyard, state.cards, 'graveyard');
+  if (opp && state) renderZoneViewer(t('zone.opponentGraveyard'), opp.graveyard, state.cards, 'graveyard');
 });
 
 document.getElementById('opponent-exile-zone').addEventListener('click', () => {
   const opp = getOpponentPlayer();
   const state = getState();
-  if (opp && state) renderZoneViewer('相手の追放', opp.exile, state.cards, 'exile');
+  if (opp && state) renderZoneViewer(t('zone.opponentExile'), opp.exile, state.cards, 'exile');
 });
 
 document.getElementById('zone-viewer-close').addEventListener('click', closeZoneViewer);
@@ -378,7 +417,7 @@ document.getElementById('zone-viewer-close').addEventListener('click', closeZone
 document.getElementById('my-sideboard-zone').addEventListener('click', () => {
   const me = getMyPlayer();
   const state = getState();
-  if (me && state) renderZoneViewer('サイドボード', me.sideboard || [], state.cards, 'sideboard');
+  if (me && state) renderZoneViewer(t('zone.sideboard'), me.sideboard || [], state.cards, 'sideboard');
 });
 
 // Scry
@@ -404,7 +443,7 @@ document.getElementById('scry-confirm-btn').addEventListener('click', () => {
   const { top, bottom } = getScryResult();
   sendAction('scry_resolve', { top, bottom });
   closeScryViewer();
-  addSystemMessage(`Scry ${top.length + bottom.length}: トップ${top.length}枚, ボトム${bottom.length}枚`);
+  addSystemMessage(tf('system.scryResolved', { total: top.length + bottom.length, top: top.length, bottom: bottom.length }));
 });
 
 // Library Search
@@ -419,7 +458,7 @@ document.getElementById('search-btn').addEventListener('click', () => {
 document.getElementById('search-viewer-close').addEventListener('click', () => {
   closeSearchViewer();
   sendAction('shuffle', {});
-  addSystemMessage('ライブラリーをシャッフルしました');
+  addSystemMessage(t('system.shuffled'));
 });
 
 // Reveal modal close
@@ -468,3 +507,25 @@ document.getElementById('note-cancel-btn').addEventListener('click', () => {
   document.getElementById('note-modal').classList.add('hidden');
   resetNoteTarget();
 });
+
+// ===== Chat Panel Resize =====
+{
+  const resizeHandle = document.getElementById('chat-resize-handle');
+  const chatPanel = document.getElementById('chat-panel');
+  let isResizing = false;
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    chatPanel.style.width = Math.max(120, Math.min(500, newWidth)) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    isResizing = false;
+  });
+}

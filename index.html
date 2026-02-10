@@ -15,9 +15,13 @@
   <div id="auth-gate">
     <h1>MTG Simulator</h1>
     <div class="auth-form">
-      <input type="password" id="passphrase-input" placeholder="パスフレーズを入力">
-      <button id="auth-btn">入室</button>
-      <p id="auth-error" class="hidden">パスフレーズが違います</p>
+      <select id="lang-select">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+      <input type="password" id="passphrase-input" data-i18n-placeholder="auth.placeholder" placeholder="パスフレーズを入力">
+      <button id="auth-btn" data-i18n="auth.enter">入室</button>
+      <p id="auth-error" class="hidden" data-i18n="auth.error">パスフレーズが違います</p>
     </div>
   </div>
 
@@ -26,28 +30,28 @@
     <h1>MTG Simulator</h1>
     <div id="connection-section">
       <div id="host-section">
-        <button id="create-game-btn">ゲームを作成</button>
+        <button id="create-game-btn" data-i18n="lobby.createGame">ゲームを作成</button>
         <div id="invite-section" class="hidden">
-          <p>招待URLを相手に共有してください:</p>
+          <p data-i18n="lobby.shareInvite">招待URLを相手に共有してください:</p>
           <input type="text" id="invite-url" readonly>
-          <button id="copy-url-btn">コピー</button>
-          <p id="connection-status">接続待ち...</p>
+          <button id="copy-url-btn" data-i18n="lobby.copy">コピー</button>
+          <p id="connection-status" data-i18n="lobby.connectionWaiting">接続待ち...</p>
         </div>
       </div>
     </div>
 
     <!-- Deck Input (shown after connection) -->
     <div id="deck-section" class="hidden">
-      <h2>デッキリスト</h2>
+      <h2 data-i18n="lobby.deckList">デッキリスト</h2>
       <textarea id="deck-input" rows="15" placeholder="4 Lightning Bolt
 4 Mountain
 
 Sideboard:
 2 Pyroblast
 ..."></textarea>
-      <button id="load-deck-btn">デッキを読み込む</button>
+      <button id="load-deck-btn" data-i18n="lobby.loadDeck">デッキを読み込む</button>
       <div id="deck-status"></div>
-      <div id="waiting-opponent" class="hidden">相手のデッキ準備を待っています...</div>
+      <div id="waiting-opponent" class="hidden" data-i18n="lobby.waitingOpponent">相手のデッキ準備を待っています...</div>
     </div>
   </div>
 
@@ -56,10 +60,20 @@ Sideboard:
     <!-- Opponent Info Bar -->
     <div id="opponent-info" class="player-info">
       <span class="player-name" id="opponent-name">Opponent</span>
-      <span class="life-display">Life: <span id="opponent-life">20</span></span>
-      <span class="poison-display">Poison: <span id="opponent-poison">0</span></span>
-      <span>Library: <span id="opponent-library-count">0</span></span>
-      <span>Hand: <span id="opponent-hand-count">0</span></span>
+      <span class="life-display" data-i18n="game.life">Life:</span> <span id="opponent-life">20</span>
+      <span class="poison-display" data-i18n="game.poison">Poison:</span> <span id="opponent-poison">0</span>
+      <span><span data-i18n="game.library">Library:</span> <span id="opponent-library-count">0</span></span>
+      <span><span data-i18n="game.hand">Hand:</span> <span id="opponent-hand-count">0</span></span>
+    </div>
+
+    <!-- Turn/Phase Bar -->
+    <div id="turn-phase-bar">
+      <span id="turn-counter"></span>
+      <span id="active-player-display"></span>
+      <div id="phase-display"></div>
+      <button id="pass-priority-btn" data-i18n="turn.passPriority">優先権パス</button>
+      <span id="priority-indicator"></span>
+      <button id="next-turn-btn" data-i18n="turn.nextTurn">次のターン</button>
     </div>
 
     <!-- Opponent Battlefield -->
@@ -69,10 +83,10 @@ Sideboard:
     <!-- Opponent GY / Exile -->
     <div class="zone-row">
       <div id="opponent-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="opponent">
-        <span class="zone-label">GY: <span id="opponent-gy-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.graveyard">GY:</span> <span id="opponent-gy-count">0</span></span>
       </div>
       <div id="opponent-exile-zone" class="zone-small" data-zone="exile" data-player="opponent">
-        <span class="zone-label">Exile: <span id="opponent-exile-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.exile">Exile:</span> <span id="opponent-exile-count">0</span></span>
       </div>
     </div>
 
@@ -86,47 +100,49 @@ Sideboard:
     <!-- My Zones + Actions + Chat -->
     <div class="bottom-bar">
       <div id="my-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="self">
-        <span class="zone-label">GY: <span id="my-gy-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.graveyard">GY:</span> <span id="my-gy-count">0</span></span>
       </div>
       <div id="my-exile-zone" class="zone-small" data-zone="exile" data-player="self">
-        <span class="zone-label">Exile: <span id="my-exile-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.exile">Exile:</span> <span id="my-exile-count">0</span></span>
       </div>
       <div id="my-library-zone" class="zone-small" data-zone="library" data-player="self">
-        <span class="zone-label">Library: <span id="my-library-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.library">Library:</span> <span id="my-library-count">0</span></span>
       </div>
       <div id="my-sideboard-zone" class="zone-small" data-zone="sideboard" data-player="self">
-        <span class="zone-label">SB: <span id="my-sb-count">0</span></span>
+        <span class="zone-label"><span data-i18n="game.sideboard">SB:</span> <span id="my-sb-count">0</span></span>
       </div>
       <div id="actions-panel">
         <div class="life-controls">
-          <span>Life: <span id="my-life">20</span></span>
+          <span><span data-i18n="game.life">Life:</span> <span id="my-life">20</span></span>
           <button class="life-btn" data-delta="-1">-1</button>
           <button class="life-btn" data-delta="+1">+1</button>
           <button class="life-btn" data-delta="-5">-5</button>
           <button class="life-btn" data-delta="+5">+5</button>
         </div>
         <div class="poison-controls">
-          <span>Poison: <span id="my-poison">0</span></span>
+          <span><span data-i18n="game.poison">Poison:</span> <span id="my-poison">0</span></span>
           <button class="poison-btn" data-delta="+1">+1</button>
           <button class="poison-btn" data-delta="-1">-1</button>
         </div>
         <div class="action-buttons">
-          <button id="draw-btn">ドロー</button>
-          <button id="shuffle-btn">シャッフル</button>
-          <button id="mulligan-btn">マリガン</button>
-          <button id="scry-btn">Scry</button>
-          <button id="search-btn">検索</button>
-          <button id="token-btn">トークン</button>
-          <button id="roll-btn">ダイス</button>
-          <button id="coin-btn">コイン</button>
-          <button id="untap-all-btn">全アンタップ</button>
+          <button id="draw-btn" data-i18n="game.draw">ドロー</button>
+          <button id="shuffle-btn" data-i18n="game.shuffle">シャッフル</button>
+          <button id="mulligan-btn" data-i18n="game.mulligan">マリガン</button>
+          <button id="scry-btn" data-i18n="game.scry">Scry</button>
+          <button id="search-btn" data-i18n="game.search">検索</button>
+          <button id="token-btn" data-i18n="game.token">トークン</button>
+          <button id="roll-btn" data-i18n="game.dice">ダイス</button>
+          <button id="coin-btn" data-i18n="game.coin">コイン</button>
+          <button id="untap-all-btn" data-i18n="game.untapAll">全アンタップ</button>
+          <button id="mute-btn">🔊</button>
         </div>
       </div>
+      <div class="resize-handle" id="chat-resize-handle"></div>
       <div id="chat-panel">
         <div id="chat-log"></div>
         <div class="chat-input-row">
-          <input type="text" id="chat-input" placeholder="チャット...">
-          <button id="chat-send-btn">送信</button>
+          <input type="text" id="chat-input" data-i18n-placeholder="game.chatPlaceholder" placeholder="チャット...">
+          <button id="chat-send-btn" data-i18n="game.send">送信</button>
         </div>
       </div>
     </div>
@@ -140,104 +156,104 @@ Sideboard:
       <div id="zone-viewer-content">
         <h3 id="zone-viewer-title"></h3>
         <div id="zone-viewer-cards"></div>
-        <button id="zone-viewer-close">閉じる</button>
+        <button id="zone-viewer-close" data-i18n="game.close">閉じる</button>
       </div>
     </div>
 
     <!-- Token Modal -->
     <div id="token-modal" class="hidden">
       <div class="modal-content">
-        <h3>トークン生成</h3>
-        <label>名前: <input type="text" id="token-name" value="Token"></label>
-        <label>P/T: <input type="text" id="token-pt" value="1/1"></label>
-        <button id="token-create-btn">生成</button>
-        <button id="token-cancel-btn">キャンセル</button>
+        <h3 data-i18n="modal.token.title">トークン生成</h3>
+        <label><span data-i18n="modal.token.name">名前:</span> <input type="text" id="token-name" value="Token"></label>
+        <label><span data-i18n="modal.token.pt">P/T:</span> <input type="text" id="token-pt" value="1/1"></label>
+        <button id="token-create-btn" data-i18n="modal.token.create">生成</button>
+        <button id="token-cancel-btn" data-i18n="modal.token.cancel">キャンセル</button>
       </div>
     </div>
 
     <!-- Dice Modal -->
     <div id="dice-modal" class="hidden">
       <div class="modal-content">
-        <h3>ダイスロール</h3>
-        <label>面数: <input type="number" id="dice-sides" value="6" min="2" max="100"></label>
-        <button id="dice-roll-btn">ロール</button>
-        <button id="dice-cancel-btn">キャンセル</button>
+        <h3 data-i18n="modal.dice.title">ダイスロール</h3>
+        <label><span data-i18n="modal.dice.sides">面数:</span> <input type="number" id="dice-sides" value="6" min="2" max="100"></label>
+        <button id="dice-roll-btn" data-i18n="modal.dice.roll">ロール</button>
+        <button id="dice-cancel-btn" data-i18n="modal.dice.cancel">キャンセル</button>
       </div>
     </div>
 
     <!-- Scry Modal -->
     <div id="scry-modal" class="hidden">
       <div class="modal-content">
-        <h3>Scry</h3>
-        <label>枚数: <input type="number" id="scry-count" value="1" min="1" max="20"></label>
-        <button id="scry-start-btn">確認</button>
-        <button id="scry-cancel-btn">キャンセル</button>
+        <h3 data-i18n="modal.scry.title">Scry</h3>
+        <label><span data-i18n="modal.scry.count">枚数:</span> <input type="number" id="scry-count" value="1" min="1" max="20"></label>
+        <button id="scry-start-btn" data-i18n="modal.scry.confirm">確認</button>
+        <button id="scry-cancel-btn" data-i18n="modal.scry.cancel">キャンセル</button>
       </div>
     </div>
 
     <!-- Scry Viewer -->
     <div id="scry-viewer" class="hidden">
       <div id="scry-viewer-content">
-        <h3>Scry — トップに残すカードを選択</h3>
-        <p class="scry-hint">クリックでトップ/ボトムを切り替え。トップ内の順序はドラッグで変更。</p>
+        <h3 data-i18n="modal.scry.selectTop">Scry — トップに残すカードを選択</h3>
+        <p class="scry-hint" data-i18n="modal.scry.hint">クリックでトップ/ボトムを切り替え。トップ内の順序はドラッグで変更。</p>
         <div class="scry-sections">
           <div class="scry-section">
-            <h4>トップ（上が先にドロー）</h4>
+            <h4 data-i18n="modal.scry.top">トップ（上が先にドロー）</h4>
             <div id="scry-top-cards" class="scry-card-list"></div>
           </div>
           <div class="scry-section">
-            <h4>ボトム</h4>
+            <h4 data-i18n="modal.scry.bottom">ボトム</h4>
             <div id="scry-bottom-cards" class="scry-card-list"></div>
           </div>
         </div>
-        <button id="scry-confirm-btn">確定</button>
+        <button id="scry-confirm-btn" data-i18n="modal.scry.done">確定</button>
       </div>
     </div>
 
     <!-- Library Search Viewer -->
     <div id="search-viewer" class="hidden">
       <div id="search-viewer-content">
-        <h3>ライブラリー検索</h3>
+        <h3 data-i18n="modal.search.title">ライブラリー検索</h3>
         <div id="search-viewer-cards"></div>
-        <button id="search-viewer-close">閉じる（シャッフル）</button>
+        <button id="search-viewer-close" data-i18n="modal.search.closeAndShuffle">閉じる（シャッフル）</button>
       </div>
     </div>
 
     <!-- Reveal Modal -->
     <div id="reveal-modal" class="hidden">
       <div id="reveal-modal-content">
-        <h3 id="reveal-modal-title">公開されたカード</h3>
+        <h3 id="reveal-modal-title" data-i18n="modal.reveal.title">公開されたカード</h3>
         <div id="reveal-modal-cards"></div>
-        <button id="reveal-modal-close">閉じる</button>
+        <button id="reveal-modal-close" data-i18n="modal.reveal.close">閉じる</button>
       </div>
     </div>
 
     <!-- Counter Type Modal -->
     <div id="counter-modal" class="hidden">
       <div class="modal-content">
-        <h3>カウンター</h3>
+        <h3 data-i18n="modal.counter.title">カウンター</h3>
         <div class="counter-type-buttons">
           <button class="counter-type-btn" data-type="+1/+1">+1/+1</button>
           <button class="counter-type-btn" data-type="-1/-1">-1/-1</button>
-          <button class="counter-type-btn" data-type="loyalty">忠誠度</button>
-          <button class="counter-type-btn" data-type="charge">蓄積</button>
+          <button class="counter-type-btn" data-type="loyalty" data-i18n="modal.counter.loyalty">忠誠度</button>
+          <button class="counter-type-btn" data-type="charge" data-i18n="modal.counter.charge">蓄積</button>
         </div>
-        <label>その他: <input type="text" id="counter-custom-type" placeholder="種別名"></label>
+        <label><span data-i18n="modal.counter.custom">その他:</span> <input type="text" id="counter-custom-type" data-i18n-placeholder="modal.counter.customPlaceholder" placeholder="種別名"></label>
         <div class="counter-delta-buttons">
           <button id="counter-add-btn">+1</button>
           <button id="counter-remove-btn">-1</button>
         </div>
-        <button id="counter-cancel-btn">閉じる</button>
+        <button id="counter-cancel-btn" data-i18n="modal.counter.close">閉じる</button>
       </div>
     </div>
 
     <!-- Note Modal -->
     <div id="note-modal" class="hidden">
       <div class="modal-content">
-        <h3>メモ</h3>
-        <input type="text" id="note-input" placeholder="注釈を入力...">
-        <button id="note-save-btn">保存</button>
-        <button id="note-cancel-btn">キャンセル</button>
+        <h3 data-i18n="modal.note.title">メモ</h3>
+        <input type="text" id="note-input" data-i18n-placeholder="modal.note.placeholder" placeholder="注釈を入力...">
+        <button id="note-save-btn" data-i18n="modal.note.save">保存</button>
+        <button id="note-cancel-btn" data-i18n="modal.note.cancel">キャンセル</button>
       </div>
     </div>
   </div>

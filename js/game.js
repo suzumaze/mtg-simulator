@@ -1,10 +1,19 @@
 // Game state management
 
 import { getIsHost, sendMessage } from './connection.js';
+import { t, tf } from './i18n.js';
 
 let nextCardId = 1;
 let gameState = null;
 let onStateChange = null;
+
+export const PHASES = [
+  'untap', 'upkeep', 'draw',
+  'main1',
+  'combat_begin', 'combat_attackers', 'combat_blockers', 'combat_damage', 'combat_end',
+  'main2',
+  'end_step', 'cleanup',
+];
 
 export function setOnStateChange(cb) {
   onStateChange = cb;
@@ -92,6 +101,13 @@ export function initGame(myCards, opponentCards, mySideboard, opponentSideboard)
       },
     },
     cards,
+    turn: {
+      number: 1,
+      activePlayer: 'host',
+      phase: 'main1',
+      priority: 'host',
+      passed: { host: false, guest: false },
+    },
   };
 
   // Draw 7 for each player
@@ -147,6 +163,7 @@ function serializeStateForOpponent() {
       [opp]: gameState.players[opp],
     },
     cards: gameState.cards,
+    turn: gameState.turn,
   };
 }
 
@@ -346,6 +363,46 @@ export function processAction(role, type, payload) {
       broadcastAction(role, type, {});
       break;
     }
+    case 'next_turn': {
+      const turn = gameState.turn;
+      turn.number++;
+      turn.activePlayer = turn.activePlayer === 'host' ? 'guest' : 'host';
+      turn.phase = 'untap';
+      turn.priority = turn.activePlayer;
+      turn.passed = { host: false, guest: false };
+      broadcastAction(role, type, {});
+      break;
+    }
+    case 'set_phase': {
+      gameState.turn.phase = payload.phase;
+      gameState.turn.passed = { host: false, guest: false };
+      broadcastAction(role, type, payload);
+      break;
+    }
+    case 'pass_priority': {
+      const turn = gameState.turn;
+      turn.passed[role] = true;
+      if (turn.passed.host && turn.passed.guest) {
+        // Both passed — advance phase
+        const idx = PHASES.indexOf(turn.phase);
+        if (turn.phase === 'cleanup') {
+          // End of turn — next turn
+          turn.number++;
+          turn.activePlayer = turn.activePlayer === 'host' ? 'guest' : 'host';
+          turn.phase = 'untap';
+          turn.priority = turn.activePlayer;
+        } else if (idx !== -1 && idx < PHASES.length - 1) {
+          turn.phase = PHASES[idx + 1];
+          turn.priority = turn.activePlayer;
+        }
+        turn.passed = { host: false, guest: false };
+      } else {
+        // Switch priority to other player
+        turn.priority = role === 'host' ? 'guest' : 'host';
+      }
+      broadcastAction(role, type, {});
+      break;
+    }
     default:
       console.warn('Unknown action:', type);
   }
@@ -410,23 +467,22 @@ export function handleMessage(msg) {
         processAction(oppR, 'load_deck', msg.payload);
         break;
       case 'chat':
-        if (onStateChange) onStateChange('chat', { playerName: 'Opponent', text: msg.payload.text });
+        if (onStateChange) onStateChange('chat', { playerName: t('player.opponent'), text: msg.payload.text });
         break;
       case 'reveal':
         if (onStateChange) onStateChange('reveal', msg.payload);
         break;
       case 'roll': {
-        const rollResult = Math.floor(Math.random() * (msg.payload.sides || 6)) + 1;
-        // Show to host
-        if (onStateChange) onStateChange('system', { text: `相手がd${msg.payload.sides}をロール: ${rollResult}` });
-        // Send result back to guest
-        sendMessage({ type: 'system', payload: { text: `d${msg.payload.sides}をロール: ${rollResult}` } });
+        const sides = msg.payload.sides || 6;
+        const rollResult = Math.floor(Math.random() * sides) + 1;
+        if (onStateChange) onStateChange('system', { text: tf('system.opponentDiceRolled', { sides, result: rollResult }) });
+        sendMessage({ type: 'system', payload: { text: tf('system.diceRolled', { sides, result: rollResult }) } });
         break;
       }
       case 'coin': {
-        const coinResult = Math.random() < 0.5 ? '表 (Heads)' : '裏 (Tails)';
-        if (onStateChange) onStateChange('system', { text: `相手がコインフリップ: ${coinResult}` });
-        sendMessage({ type: 'system', payload: { text: `コインフリップ: ${coinResult}` } });
+        const coinResult = Math.random() < 0.5 ? t('system.coinHeads') : t('system.coinTails');
+        if (onStateChange) onStateChange('system', { text: tf('system.opponentCoinFlip', { result: coinResult }) });
+        sendMessage({ type: 'system', payload: { text: tf('system.coinFlip', { result: coinResult }) } });
         break;
       }
       default:
@@ -479,6 +535,8 @@ function applyRemoteState(remoteState) {
     hand: typeof remoteOpp.hand === 'number' ? [] : (remoteOpp.hand || []),
     library: typeof remoteOpp.library === 'number' ? [] : (remoteOpp.library || []),
   };
+
+  if (remoteState.turn) gameState.turn = remoteState.turn;
 
   if (onStateChange) onStateChange();
 }

@@ -1,0 +1,167 @@
+{
+  "title": "MTG Simulator",
+  "auth": {
+    "placeholder": "パスフレーズを入力",
+    "enter": "入室",
+    "error": "パスフレーズが違います"
+  },
+  "lobby": {
+    "createGame": "ゲームを作成",
+    "shareInvite": "招待URLを相手に共有してください:",
+    "copy": "コピー",
+    "copied": "コピー済!",
+    "connectionWaiting": "接続待ち...",
+    "deckList": "デッキリスト",
+    "loadDeck": "デッキを読み込む",
+    "waitingOpponent": "相手のデッキ準備を待っています..."
+  },
+  "connection": {
+    "connecting": "接続中...",
+    "connected": "接続完了!",
+    "joinedHost": "ホストに接続しました",
+    "failed": "接続失敗",
+    "creating": "作成中...",
+    "error": "エラー:"
+  },
+  "deck": {
+    "inputRequired": "デッキリストを入力してください",
+    "fetchingCards": "カード情報を取得中...",
+    "noCardsFound": "カードが見つかりませんでした",
+    "fetching": "取得中... {pct}%",
+    "sideboardFormat": " + SB {count}枚",
+    "warningMissing": "⚠ 見つからないカード: {names} ({count}枚{sbInfo}読み込み済み)",
+    "loadedSuccess": "✓ {count}枚{sbInfo}のデッキを読み込みました",
+    "error": "エラー: {msg}"
+  },
+  "game": {
+    "opponent": "Opponent",
+    "life": "Life:",
+    "poison": "Poison:",
+    "library": "Library:",
+    "hand": "Hand:",
+    "graveyard": "GY:",
+    "exile": "Exile:",
+    "sideboard": "SB:",
+    "draw": "ドロー",
+    "shuffle": "シャッフル",
+    "mulligan": "マリガン",
+    "scry": "Scry",
+    "search": "検索",
+    "token": "トークン",
+    "dice": "ダイス",
+    "coin": "コイン",
+    "untapAll": "全アンタップ",
+    "chatPlaceholder": "チャット...",
+    "send": "送信",
+    "close": "閉じる"
+  },
+  "player": {
+    "you": "You",
+    "opponent": "Opponent"
+  },
+  "zone": {
+    "graveyard": "墓地",
+    "exile": "追放",
+    "sideboard": "サイドボード",
+    "opponentGraveyard": "相手の墓地",
+    "opponentExile": "相手の追放"
+  },
+  "context": {
+    "tapUntap": "タップ/アンタップ",
+    "flip": "裏返す",
+    "phaseOut": "フェイズアウト",
+    "counter": "カウンター...",
+    "clone": "コピーを生成",
+    "note": "メモ",
+    "toHand": "→ 手札",
+    "toBattlefield": "→ 戦場",
+    "toBattlefieldTapped": "→ 戦場（タップ）",
+    "toBattlefieldFaceDown": "→ 戦場（裏向き）",
+    "toGraveyard": "→ 墓地",
+    "toExile": "→ 追放",
+    "toLibraryTop": "→ ライブラリートップ",
+    "toLibraryBottom": "→ ライブラリーボトム",
+    "reveal": "相手に公開",
+    "viewCard": "カードを表示"
+  },
+  "modal": {
+    "token": {
+      "title": "トークン生成",
+      "name": "名前:",
+      "pt": "P/T:",
+      "create": "生成",
+      "cancel": "キャンセル"
+    },
+    "dice": {
+      "title": "ダイスロール",
+      "sides": "面数:",
+      "roll": "ロール",
+      "cancel": "キャンセル"
+    },
+    "scry": {
+      "title": "Scry",
+      "count": "枚数:",
+      "confirm": "確認",
+      "cancel": "キャンセル",
+      "selectTop": "Scry — トップに残すカードを選択",
+      "hint": "クリックでトップ/ボトムを切り替え。トップ内の順序はドラッグで変更。",
+      "top": "トップ（上が先にドロー）",
+      "bottom": "ボトム",
+      "done": "確定"
+    },
+    "search": {
+      "title": "ライブラリー検索",
+      "closeAndShuffle": "閉じる（シャッフル）"
+    },
+    "reveal": {
+      "title": "公開されたカード",
+      "close": "閉じる"
+    },
+    "counter": {
+      "title": "カウンター",
+      "loyalty": "忠誠度",
+      "charge": "蓄積",
+      "custom": "その他:",
+      "customPlaceholder": "種別名",
+      "close": "閉じる"
+    },
+    "note": {
+      "title": "メモ",
+      "placeholder": "注釈を入力...",
+      "save": "保存",
+      "cancel": "キャンセル"
+    }
+  },
+  "turn": {
+    "label": "ターン {num}",
+    "activePlayer": "アクティブ: {name}",
+    "priority": "優先権: {name}",
+    "passPriority": "優先権パス",
+    "nextTurn": "次のターン",
+    "untap": "アンタップ",
+    "upkeep": "アップキープ",
+    "draw": "ドロー",
+    "main1": "メイン1",
+    "combat_begin": "戦闘開始",
+    "combat_attackers": "攻撃",
+    "combat_blockers": "ブロック",
+    "combat_damage": "ダメージ",
+    "combat_end": "戦闘終了",
+    "main2": "メイン2",
+    "end_step": "終了",
+    "cleanup": "クリンナップ"
+  },
+  "system": {
+    "shuffled": "ライブラリーをシャッフルしました",
+    "mulligan": "マリガン: {count}枚ドロー",
+    "revealCard": "カードを公開: {name}",
+    "searchLibrary": "ライブラリーを検索しました",
+    "scryResolved": "Scry {total}: トップ{top}枚, ボトム{bottom}枚",
+    "diceRolled": "d{sides}をロール: {result}",
+    "opponentDiceRolled": "相手がd{sides}をロール: {result}",
+    "coinHeads": "表 (Heads)",
+    "coinTails": "裏 (Tails)",
+    "coinFlip": "コインフリップ: {result}",
+    "opponentCoinFlip": "相手がコインフリップ: {result}"
+  }
+}
