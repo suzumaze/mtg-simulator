@@ -3,6 +3,7 @@
   "auth": {
     "placeholder": "パスフレーズを入力",
     "enter": "入室",
+    "solo": "1人回し",
     "error": "パスフレーズが違います"
   },
   "lobby": {
@@ -31,7 +32,11 @@
     "sideboardFormat": " + SB {count}枚",
     "warningMissing": "⚠ 見つからないカード: {names} ({count}枚{sbInfo}読み込み済み)",
     "loadedSuccess": "✓ {count}枚{sbInfo}のデッキを読み込みました",
-    "error": "エラー: {msg}"
+    "error": "エラー: {msg}",
+    "firstPrint": "初版画像を使用",
+    "loadFile": "ファイルを読み込む",
+    "newDeck": "新しいデッキ",
+    "deckNamePlaceholder": "デッキ名"
   },
   "game": {
     "opponent": "Opponent",
@@ -51,9 +56,9 @@
     "dice": "ダイス",
     "coin": "コイン",
     "untapAll": "全アンタップ",
-    "chatPlaceholder": "チャット...",
-    "send": "送信",
-    "close": "閉じる"
+    "close": "閉じる",
+    "endGame": "ゲーム終了",
+    "endGameConfirm": "ゲームを終了しますか？"
   },
   "player": {
     "you": "You",

@@ -10,6 +10,10 @@ export function parseDeckList(text) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
 
+    // Skip Arena metadata lines
+    if (/^(About|Deck)$/i.test(trimmed)) continue;
+    if (/^Name\s+/i.test(trimmed)) continue;
+
     // Detect sideboard section
     if (/^sideboard:?\s*$/i.test(trimmed)) {
       inSideboard = true;
@@ -32,50 +36,119 @@ export function parseDeckList(text) {
   return { main, sideboard };
 }
 
-export async function fetchCards(entries, onProgress) {
+function extractCardInfo(card) {
+  const imageUrl = card.image_uris
+    ? card.image_uris.normal
+    : (card.card_faces && card.card_faces[0].image_uris
+      ? card.card_faces[0].image_uris.normal
+      : null);
+  return {
+    name: card.name,
+    imageUrl,
+    oracleText: card.oracle_text || '',
+    typeLine: card.type_line || '',
+  };
+}
+
+export async function fetchCards(entries, onProgress, { firstPrint = false } = {}) {
   const uniqueNames = [...new Set(entries.map(e => e.name))];
   const cardDataMap = {};
+  const dir = firstPrint ? 'asc' : 'desc';
 
-  // Fetch oldest printing per card via /cards/search
-  for (let i = 0; i < uniqueNames.length; i++) {
-    const name = uniqueNames[i];
+  // Check cache first
+  const uncachedNames = [];
+  for (const name of uniqueNames) {
+    const cacheKey = `mtg-card-${name.toLowerCase()}-${dir}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        cardDataMap[parsed.name.toLowerCase()] = parsed;
+        continue;
+      }
+    } catch (e) { /* cache corrupt */ }
+    uncachedNames.push(name);
+  }
+
+  const cachedCount = uniqueNames.length - uncachedNames.length;
+  if (cachedCount > 0 && onProgress) {
+    onProgress(Math.round((cachedCount / uniqueNames.length) * 100));
+  }
+
+  if (firstPrint) {
+    // First-print mode: individual search per card (need oldest printing)
+    await fetchCardsIndividually(uncachedNames, cardDataMap, dir, uniqueNames.length, cachedCount, onProgress);
+  } else {
+    // Default mode: bulk fetch via /cards/collection (up to 75 per request)
+    await fetchCardsBulk(uncachedNames, cardDataMap, dir, uniqueNames.length, cachedCount, onProgress);
+  }
+
+  return { entries, cardDataMap };
+}
+
+async function fetchCardsBulk(names, cardDataMap, dir, totalCount, cachedCount, onProgress) {
+  const BATCH_SIZE = 75;
+  for (let batch = 0; batch < names.length; batch += BATCH_SIZE) {
+    const batchNames = names.slice(batch, batch + BATCH_SIZE);
+    const identifiers = batchNames.map(name => ({ name }));
+
+    const resp = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      for (const card of (data.data || [])) {
+        const cardInfo = extractCardInfo(card);
+        cardDataMap[card.name.toLowerCase()] = cardInfo;
+        const cacheKey = `mtg-card-${card.name.toLowerCase()}-${dir}`;
+        try { localStorage.setItem(cacheKey, JSON.stringify(cardInfo)); } catch (e) { /* storage full */ }
+      }
+    }
+
+    if (onProgress) {
+      const done = cachedCount + Math.min(batch + BATCH_SIZE, names.length);
+      onProgress(Math.round((done / totalCount) * 100));
+    }
+
+    // Rate limit between batches
+    if (batch + BATCH_SIZE < names.length) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+}
+
+async function fetchCardsIndividually(names, cardDataMap, dir, totalCount, cachedCount, onProgress) {
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i];
     const query = `!"${name}"`;
-    const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released&dir=asc`;
+    const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released&dir=${dir}`;
 
     const resp = await fetch(url);
 
     if (resp.ok) {
       const data = await resp.json();
       if (data.data && data.data.length > 0) {
-        const card = data.data[0]; // Oldest printing
-        const imageUrl = card.image_uris
-          ? card.image_uris.normal
-          : (card.card_faces && card.card_faces[0].image_uris
-            ? card.card_faces[0].image_uris.normal
-            : null);
-
-        cardDataMap[card.name.toLowerCase()] = {
-          name: card.name,
-          imageUrl,
-          oracleText: card.oracle_text || '',
-          typeLine: card.type_line || '',
-        };
+        const cardInfo = extractCardInfo(data.data[0]);
+        cardDataMap[data.data[0].name.toLowerCase()] = cardInfo;
+        const cacheKey = `mtg-card-${name.toLowerCase()}-${dir}`;
+        try { localStorage.setItem(cacheKey, JSON.stringify(cardInfo)); } catch (e) { /* storage full */ }
       }
     } else if (resp.status !== 404) {
       console.warn(`Scryfall search failed for "${name}": ${resp.status}`);
     }
 
     if (onProgress) {
-      onProgress(Math.round(((i + 1) / uniqueNames.length) * 100));
+      onProgress(Math.round(((cachedCount + i + 1) / totalCount) * 100));
     }
 
-    // Rate limit: 100ms between requests (Scryfall guideline)
-    if (i < uniqueNames.length - 1) {
+    // Rate limit: 100ms between requests
+    if (i < names.length - 1) {
       await new Promise(r => setTimeout(r, 100));
     }
   }
-
-  return { entries, cardDataMap };
 }
 
 export function buildDeck(entries, cardDataMap) {

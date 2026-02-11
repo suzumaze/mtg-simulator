@@ -15,12 +15,11 @@
   <div id="auth-gate">
     <h1>MTG Simulator</h1>
     <div class="auth-form">
-      <select id="lang-select">
-        <option value="ja">日本語</option>
-        <option value="en">English</option>
-      </select>
       <input type="password" id="passphrase-input" data-i18n-placeholder="auth.placeholder" placeholder="パスフレーズを入力">
-      <button id="auth-btn" data-i18n="auth.enter">入室</button>
+      <div class="auth-buttons">
+        <button id="auth-btn" data-i18n="auth.enter">入室</button>
+        <button id="solo-btn" data-i18n="auth.solo">1人回し</button>
+      </div>
       <p id="auth-error" class="hidden" data-i18n="auth.error">パスフレーズが違います</p>
     </div>
   </div>
@@ -43,13 +42,27 @@
     <!-- Deck Input (shown after connection) -->
     <div id="deck-section" class="hidden">
       <h2 data-i18n="lobby.deckList">デッキリスト</h2>
+      <div id="deck-history-section">
+        <select id="deck-history-select">
+          <option value="" data-i18n="deck.newDeck">新しいデッキ</option>
+        </select>
+        <input type="text" id="deck-name-input" data-i18n-placeholder="deck.deckNamePlaceholder" placeholder="デッキ名">
+      </div>
       <textarea id="deck-input" rows="15" placeholder="4 Lightning Bolt
 4 Mountain
 
 Sideboard:
 2 Pyroblast
 ..."></textarea>
-      <button id="load-deck-btn" data-i18n="lobby.loadDeck">デッキを読み込む</button>
+      <label id="first-print-label">
+        <input type="checkbox" id="first-print-checkbox">
+        <span data-i18n="deck.firstPrint">初版画像を使用</span>
+      </label>
+      <div class="deck-buttons">
+        <button id="load-deck-btn" data-i18n="lobby.loadDeck">デッキを読み込む</button>
+        <input type="file" id="deck-file-input" accept=".txt" class="hidden">
+        <button id="deck-file-btn" data-i18n="deck.loadFile">ファイルを読み込む</button>
+      </div>
       <div id="deck-status"></div>
       <div id="waiting-opponent" class="hidden" data-i18n="lobby.waitingOpponent">相手のデッキ準備を待っています...</div>
     </div>
@@ -64,16 +77,7 @@ Sideboard:
       <span class="poison-display" data-i18n="game.poison">Poison:</span> <span id="opponent-poison">0</span>
       <span><span data-i18n="game.library">Library:</span> <span id="opponent-library-count">0</span></span>
       <span><span data-i18n="game.hand">Hand:</span> <span id="opponent-hand-count">0</span></span>
-    </div>
-
-    <!-- Turn/Phase Bar -->
-    <div id="turn-phase-bar">
-      <span id="turn-counter"></span>
-      <span id="active-player-display"></span>
-      <div id="phase-display"></div>
-      <button id="pass-priority-btn" data-i18n="turn.passPriority">優先権パス</button>
-      <span id="priority-indicator"></span>
-      <button id="next-turn-btn" data-i18n="turn.nextTurn">次のターン</button>
+      <button id="end-game-btn" data-i18n="game.endGame">ゲーム終了</button>
     </div>
 
     <!-- Opponent Battlefield -->
@@ -90,8 +94,15 @@ Sideboard:
       </div>
     </div>
 
-    <!-- Divider -->
-    <div class="board-divider"></div>
+    <!-- Turn/Phase Bar (center divider) -->
+    <div id="turn-phase-bar">
+      <span id="turn-counter"></span>
+      <span id="active-player-display"></span>
+      <div id="phase-display"></div>
+      <button id="pass-priority-btn" data-i18n="turn.passPriority">優先権パス</button>
+      <span id="priority-indicator"></span>
+      <button id="next-turn-btn" data-i18n="turn.nextTurn">次のターン</button>
+    </div>
 
     <!-- My Battlefield -->
     <div id="my-battlefield" class="zone battlefield" data-zone="battlefield" data-player="self">
@@ -137,13 +148,8 @@ Sideboard:
           <button id="mute-btn">🔊</button>
         </div>
       </div>
-      <div class="resize-handle" id="chat-resize-handle"></div>
       <div id="chat-panel">
         <div id="chat-log"></div>
-        <div class="chat-input-row">
-          <input type="text" id="chat-input" data-i18n-placeholder="game.chatPlaceholder" placeholder="チャット...">
-          <button id="chat-send-btn" data-i18n="game.send">送信</button>
-        </div>
       </div>
     </div>
 

@@ -683,16 +683,6 @@ export function closeZoneViewer() {
   document.getElementById('zone-viewer').classList.add('hidden');
 }
 
-// --- Chat ---
-export function addChatMessage(sender, text) {
-  const log = document.getElementById('chat-log');
-  const div = document.createElement('div');
-  div.className = 'chat-msg';
-  div.innerHTML = `<span class="chat-sender">${escapeHtml(sender)}:</span> ${escapeHtml(text)}`;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-
 export function addSystemMessage(text) {
   const log = document.getElementById('chat-log');
   const div = document.createElement('div');
@@ -702,8 +692,3 @@ export function addSystemMessage(text) {
   log.scrollTop = log.scrollHeight;
 }
 
-function escapeHtml(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}

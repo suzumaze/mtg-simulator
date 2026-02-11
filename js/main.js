@@ -1,26 +1,16 @@
 // Entry point — screen management, event wiring
 
-import { createGame, joinGame, sendMessage, setOnMessage, setOnConnected, getIsHost } from './connection.js';
+import { createGame, joinGame, sendMessage, setOnMessage, setOnConnected, getIsHost, getIsSolo, setSoloMode } from './connection.js';
 import { parseDeckList, fetchCards, buildDeck } from './deck.js';
-import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer, getLibraryTop } from './game.js';
-import { renderBoard, renderZoneViewer, closeZoneViewer, addChatMessage, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget } from './board.js';
+import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer, getLibraryTop, resetGameState } from './game.js';
+import { renderBoard, renderZoneViewer, closeZoneViewer, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget } from './board.js';
 import { initDragDrop } from './drag.js';
 import { playTap, playDraw, playShuffle, playLifeChange, playDice, playCoin, toggleMute, isMuted } from './sound.js';
 import { setLocale, applyI18nToDOM, t, tf } from './i18n.js';
 
 // ===== i18n =====
-const savedLang = localStorage.getItem('mtg-lang') || 'ja';
-const langSelect = document.getElementById('lang-select');
-langSelect.value = savedLang;
-
-setLocale(savedLang).then(() => applyI18nToDOM());
-
-langSelect.addEventListener('change', async () => {
-  const lang = langSelect.value;
-  localStorage.setItem('mtg-lang', lang);
-  await setLocale(lang);
-  applyI18nToDOM();
-});
+const browserLang = navigator.language.startsWith('ja') ? 'ja' : 'en';
+setLocale(browserLang).then(() => applyI18nToDOM());
 
 // ===== Auth Gate =====
 const PASSPHRASE_HASH = '2605313bb00abca41065d79008856c1de17d0bb0a63d55f53df2614487c044d0';
@@ -44,6 +34,18 @@ async function checkAuth() {
 }
 
 document.getElementById('auth-btn').addEventListener('click', checkAuth);
+document.getElementById('solo-btn').addEventListener('click', async () => {
+  const input = document.getElementById('passphrase-input').value;
+  const hash = await sha256(input);
+  if (hash === PASSPHRASE_HASH) {
+    setSoloMode();
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('lobby').classList.remove('hidden');
+    initSoloLobby();
+  } else {
+    document.getElementById('auth-error').classList.remove('hidden');
+  }
+});
 document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') checkAuth();
 });
@@ -75,6 +77,35 @@ const waitingOpponent = document.getElementById('waiting-opponent');
 const urlParams = new URLSearchParams(location.search);
 const peerParam = urlParams.get('peer');
 
+function initSoloLobby() {
+  createGameBtn.classList.add('hidden');
+  deckSection.classList.remove('hidden');
+  loadDeckHistory();
+}
+
+function loadDeckHistory() {
+  const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
+  const select = document.getElementById('deck-history-select');
+  while (select.options.length > 1) select.remove(1);
+  for (const deck of history) {
+    const opt = document.createElement('option');
+    opt.value = deck.timestamp;
+    opt.textContent = `${deck.name} (${new Date(deck.timestamp).toLocaleDateString()})`;
+    select.appendChild(opt);
+  }
+}
+
+document.getElementById('deck-history-select').addEventListener('change', (e) => {
+  const ts = parseInt(e.target.value, 10);
+  if (!ts) return;
+  const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
+  const deck = history.find(d => d.timestamp === ts);
+  if (deck) {
+    document.getElementById('deck-input').value = deck.text;
+    document.getElementById('deck-name-input').value = deck.name;
+  }
+});
+
 function initLobby() {
   if (peerParam) {
     // Guest mode — auto-join
@@ -89,6 +120,7 @@ function initLobby() {
       inviteUrlInput.classList.add('hidden');
       copyUrlBtn.classList.add('hidden');
       deckSection.classList.remove('hidden');
+      loadDeckHistory();
     }).catch((err) => {
       createGameBtn.textContent = t('connection.failed');
       connectionStatus.textContent = `${t('connection.error')} ${err}`;
@@ -119,6 +151,7 @@ copyUrlBtn.addEventListener('click', () => {
 setOnConnected(() => {
   deckSection.classList.remove('hidden');
   connectionStatus.textContent = t('connection.connected');
+  loadDeckHistory();
 });
 
 // ===== Deck Loading =====
@@ -141,9 +174,10 @@ loadDeckBtn.addEventListener('click', async () => {
     }
 
     const allEntries = [...mainEntries, ...sbEntries];
+    const firstPrint = document.getElementById('first-print-checkbox').checked;
     const { cardDataMap } = await fetchCards(allEntries, (pct) => {
       deckStatus.textContent = tf('deck.fetching', { pct });
-    });
+    }, { firstPrint });
 
     const { cards, notFound } = buildDeck(mainEntries, cardDataMap);
     const { cards: sbCards } = buildDeck(sbEntries, cardDataMap);
@@ -159,7 +193,18 @@ loadDeckBtn.addEventListener('click', async () => {
     mySideboardCards = sbCards;
     myDeckReady = true;
 
-    if (getIsHost()) {
+    // Save to deck history
+    const deckName = document.getElementById('deck-name-input').value.trim() || 'Unnamed';
+    const deckHistory = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
+    deckHistory.unshift({ name: deckName, text, timestamp: Date.now() });
+    if (deckHistory.length > 20) deckHistory.length = 20;
+    try { localStorage.setItem('mtg-deck-history', JSON.stringify(deckHistory)); } catch (e) { /* storage full */ }
+
+    if (getIsSolo()) {
+      opponentDeckCards = [];
+      opponentSideboardCards = [];
+      startGame();
+    } else if (getIsHost()) {
       if (opponentDeckReady) {
         startGame();
       } else {
@@ -173,6 +218,22 @@ loadDeckBtn.addEventListener('click', async () => {
     deckStatus.textContent = tf('deck.error', { msg: err.message });
     loadDeckBtn.disabled = false;
   }
+});
+
+// ===== File Upload =====
+document.getElementById('deck-file-btn').addEventListener('click', () => {
+  document.getElementById('deck-file-input').click();
+});
+
+document.getElementById('deck-file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('deck-input').value = ev.target.result;
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 });
 
 // ===== Message Handling =====
@@ -190,11 +251,6 @@ setOnMessage((msg) => {
 
   if (msg.type === 'game_state' || msg.type === 'action') {
     handleMessage(msg);
-    return;
-  }
-
-  if (msg.type === 'chat') {
-    addChatMessage(msg.payload.playerName, msg.payload.text);
     return;
   }
 
@@ -220,10 +276,6 @@ setOnMessage((msg) => {
 
 // ===== Game State Rendering =====
 setOnStateChange((eventType, eventData) => {
-  if (eventType === 'chat') {
-    addChatMessage(eventData.playerName, eventData.text);
-    return;
-  }
   if (eventType === 'system') {
     addSystemMessage(eventData.text);
     return;
@@ -249,6 +301,32 @@ function showGameScreen() {
   gameScreen.classList.remove('hidden');
   initDragDrop();
   renderBoard();
+}
+
+// ===== End Game =====
+document.getElementById('end-game-btn').addEventListener('click', () => {
+  if (!confirm(t('game.endGameConfirm'))) return;
+  endGame();
+});
+
+function endGame() {
+  resetGameState();
+  myDeckCards = null;
+  mySideboardCards = null;
+  opponentDeckCards = null;
+  opponentSideboardCards = null;
+  myDeckReady = false;
+  opponentDeckReady = false;
+  mulliganCount = 0;
+
+  gameScreen.classList.add('hidden');
+  lobby.classList.remove('hidden');
+
+  loadDeckBtn.disabled = false;
+  deckStatus.textContent = '';
+  waitingOpponent.classList.add('hidden');
+  deckInput.value = '';
+  document.getElementById('chat-log').innerHTML = '';
 }
 
 // ===== Turn/Phase Buttons =====
@@ -364,27 +442,6 @@ document.getElementById('coin-btn').addEventListener('click', () => {
   }
   playCoin();
 });
-
-// Chat
-document.getElementById('chat-send-btn').addEventListener('click', sendChat);
-document.getElementById('chat-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendChat();
-});
-
-function sendChat() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  if (getIsHost()) {
-    addChatMessage(t('player.you'), text);
-    sendMessage({ type: 'chat', payload: { playerName: t('player.opponent'), text } });
-  } else {
-    addChatMessage(t('player.you'), text);
-    sendMessage({ type: 'chat', payload: { text } });
-  }
-}
 
 // Zone viewers (click to open GY/Exile)
 document.getElementById('my-graveyard-zone').addEventListener('click', () => {
@@ -508,24 +565,3 @@ document.getElementById('note-cancel-btn').addEventListener('click', () => {
   resetNoteTarget();
 });
 
-// ===== Chat Panel Resize =====
-{
-  const resizeHandle = document.getElementById('chat-resize-handle');
-  const chatPanel = document.getElementById('chat-panel');
-  let isResizing = false;
-
-  resizeHandle.addEventListener('mousedown', (e) => {
-    isResizing = true;
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isResizing) return;
-    const newWidth = window.innerWidth - e.clientX;
-    chatPanel.style.width = Math.max(120, Math.min(500, newWidth)) + 'px';
-  });
-
-  document.addEventListener('mouseup', () => {
-    isResizing = false;
-  });
-}

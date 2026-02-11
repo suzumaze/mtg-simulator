@@ -3,6 +3,7 @@
   "auth": {
     "placeholder": "Enter passphrase",
     "enter": "Enter",
+    "solo": "Solo Play",
     "error": "Incorrect passphrase"
   },
   "lobby": {
@@ -31,7 +32,11 @@
     "sideboardFormat": " + SB {count}",
     "warningMissing": "⚠ Cards not found: {names} ({count}{sbInfo} loaded)",
     "loadedSuccess": "✓ Loaded {count}{sbInfo} cards",
-    "error": "Error: {msg}"
+    "error": "Error: {msg}",
+    "firstPrint": "Use first printing images",
+    "loadFile": "Load File",
+    "newDeck": "New Deck",
+    "deckNamePlaceholder": "Deck name"
   },
   "game": {
     "opponent": "Opponent",
@@ -51,9 +56,9 @@
     "dice": "Dice",
     "coin": "Coin",
     "untapAll": "Untap All",
-    "chatPlaceholder": "Chat...",
-    "send": "Send",
-    "close": "Close"
+    "close": "Close",
+    "endGame": "End Game",
+    "endGameConfirm": "End the game?"
   },
   "player": {
     "you": "You",

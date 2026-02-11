@@ -23,6 +23,10 @@ export function getState() {
   return gameState;
 }
 
+export function resetGameState() {
+  gameState = null;
+}
+
 function genId() {
   return `c${nextCardId++}`;
 }

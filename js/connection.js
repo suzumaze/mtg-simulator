@@ -3,11 +3,21 @@
 let peer = null;
 let conn = null;
 let isHost = false;
+let soloMode = false;
 let onMessageCallback = null;
 let onConnectedCallback = null;
 
 export function getIsHost() {
-  return isHost;
+  return isHost || soloMode;
+}
+
+export function getIsSolo() {
+  return soloMode;
+}
+
+export function setSoloMode() {
+  soloMode = true;
+  isHost = true;
 }
 
 export function setOnMessage(cb) {
