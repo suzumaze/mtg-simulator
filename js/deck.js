@@ -7,8 +7,15 @@ export function parseDeckList(text) {
   let inSideboard = false;
 
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
+    const trimmed = line.replace(/\u3000/g, ' ').trim();
+
+    // Empty line after main deck starts sideboard (MTGO format)
+    if (!trimmed) {
+      if (main.length > 0) inSideboard = true;
+      continue;
+    }
+
+    if (trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
 
     // Skip Arena metadata lines
     if (/^(About|Deck)$/i.test(trimmed)) continue;
@@ -17,11 +24,6 @@ export function parseDeckList(text) {
     // Detect sideboard section
     if (/^sideboard:?\s*$/i.test(trimmed)) {
       inSideboard = true;
-      continue;
-    }
-    // Empty line after main deck also starts sideboard (MTGO format)
-    if (trimmed === '') {
-      if (main.length > 0) inSideboard = true;
       continue;
     }
 
