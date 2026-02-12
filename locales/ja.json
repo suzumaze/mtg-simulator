@@ -1,13 +1,8 @@
 {
   "title": "MTG Simulator",
-  "auth": {
-    "placeholder": "パスフレーズを入力",
-    "enter": "入室",
-    "solo": "1人回し",
-    "error": "パスフレーズが違います"
-  },
   "lobby": {
     "createGame": "ゲームを作成",
+    "solo": "1人回し",
     "shareInvite": "招待URLを相手に共有してください:",
     "copy": "コピー",
     "copied": "コピー済!",

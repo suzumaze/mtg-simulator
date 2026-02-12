@@ -1,13 +1,8 @@
 {
   "title": "MTG Simulator",
-  "auth": {
-    "placeholder": "Enter passphrase",
-    "enter": "Enter",
-    "solo": "Solo Play",
-    "error": "Incorrect passphrase"
-  },
   "lobby": {
     "createGame": "Create Game",
+    "solo": "Solo Play",
     "shareInvite": "Share this invite URL with your opponent:",
     "copy": "Copy",
     "copied": "Copied!",

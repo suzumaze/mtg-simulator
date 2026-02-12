@@ -11,25 +11,15 @@
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
-  <!-- Auth Gate -->
-  <div id="auth-gate">
-    <h1>MTG Simulator</h1>
-    <div class="auth-form">
-      <input type="password" id="passphrase-input" data-i18n-placeholder="auth.placeholder" placeholder="パスフレーズを入力">
-      <div class="auth-buttons">
-        <button id="auth-btn" data-i18n="auth.enter">入室</button>
-        <button id="solo-btn" data-i18n="auth.solo">1人回し</button>
-      </div>
-      <p id="auth-error" class="hidden" data-i18n="auth.error">パスフレーズが違います</p>
-    </div>
-  </div>
-
   <!-- Lobby Screen -->
-  <div id="lobby" class="hidden">
+  <div id="lobby">
     <h1>MTG Simulator</h1>
     <div id="connection-section">
       <div id="host-section">
-        <button id="create-game-btn" data-i18n="lobby.createGame">ゲームを作成</button>
+        <div class="lobby-buttons">
+          <button id="create-game-btn" data-i18n="lobby.createGame">ゲームを作成</button>
+          <button id="solo-btn" data-i18n="lobby.solo">1人回し</button>
+        </div>
         <div id="invite-section" class="hidden">
           <p data-i18n="lobby.shareInvite">招待URLを相手に共有してください:</p>
           <input type="text" id="invite-url" readonly>

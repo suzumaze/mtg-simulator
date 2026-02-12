@@ -12,42 +12,10 @@ import { setLocale, applyI18nToDOM, t, tf } from './i18n.js';
 const browserLang = navigator.language.startsWith('ja') ? 'ja' : 'en';
 setLocale(browserLang).then(() => applyI18nToDOM());
 
-// ===== Auth Gate =====
-const PASSPHRASE_HASH = '2605313bb00abca41065d79008856c1de17d0bb0a63d55f53df2614487c044d0';
-
-async function sha256(text) {
-  const data = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function checkAuth() {
-  const input = document.getElementById('passphrase-input').value;
-  const hash = await sha256(input);
-  if (hash === PASSPHRASE_HASH) {
-    document.getElementById('auth-gate').classList.add('hidden');
-    document.getElementById('lobby').classList.remove('hidden');
-    initLobby();
-  } else {
-    document.getElementById('auth-error').classList.remove('hidden');
-  }
-}
-
-document.getElementById('auth-btn').addEventListener('click', checkAuth);
-document.getElementById('solo-btn').addEventListener('click', async () => {
-  const input = document.getElementById('passphrase-input').value;
-  const hash = await sha256(input);
-  if (hash === PASSPHRASE_HASH) {
-    setSoloMode();
-    document.getElementById('auth-gate').classList.add('hidden');
-    document.getElementById('lobby').classList.remove('hidden');
-    initSoloLobby();
-  } else {
-    document.getElementById('auth-error').classList.remove('hidden');
-  }
-});
-document.getElementById('passphrase-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') checkAuth();
+// ===== Solo Mode =====
+document.getElementById('solo-btn').addEventListener('click', () => {
+  setSoloMode();
+  initSoloLobby();
 });
 
 // ===== State =====
@@ -77,8 +45,11 @@ const waitingOpponent = document.getElementById('waiting-opponent');
 const urlParams = new URLSearchParams(location.search);
 const peerParam = urlParams.get('peer');
 
+initLobby();
+
 function initSoloLobby() {
   createGameBtn.classList.add('hidden');
+  document.getElementById('solo-btn').classList.add('hidden');
   deckSection.classList.remove('hidden');
   loadDeckHistory();
 }
