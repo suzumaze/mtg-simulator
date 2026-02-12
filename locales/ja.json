@@ -30,6 +30,9 @@
     "error": "エラー: {msg}",
     "firstPrint": "初版画像を使用",
     "loadFile": "ファイルを読み込む",
+    "fromFile": "ファイルから入力",
+    "fromClipboard": "クリップボードから入力",
+    "clear": "クリア",
     "newDeck": "新しいデッキ",
     "deckNamePlaceholder": "デッキ名"
   },
@@ -52,6 +55,7 @@
     "coin": "コイン",
     "untapAll": "全アンタップ",
     "close": "閉じる",
+    "log": "ログ",
     "endGame": "ゲーム終了",
     "endGameConfirm": "ゲームを終了しますか？"
   },

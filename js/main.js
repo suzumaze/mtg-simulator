@@ -15,7 +15,13 @@ setLocale(browserLang).then(() => applyI18nToDOM());
 // ===== Solo Mode =====
 document.getElementById('solo-btn').addEventListener('click', () => {
   setSoloMode();
-  initSoloLobby();
+  createGameBtn.classList.add('hidden');
+  document.getElementById('solo-btn').classList.add('hidden');
+  if (myDeckReady) {
+    opponentDeckCards = [];
+    opponentSideboardCards = [];
+    startGame();
+  }
 });
 
 // ===== State =====
@@ -46,13 +52,7 @@ const urlParams = new URLSearchParams(location.search);
 const peerParam = urlParams.get('peer');
 
 initLobby();
-
-function initSoloLobby() {
-  createGameBtn.classList.add('hidden');
-  document.getElementById('solo-btn').classList.add('hidden');
-  deckSection.classList.remove('hidden');
-  loadDeckHistory();
-}
+loadDeckHistory();
 
 function loadDeckHistory() {
   const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
@@ -64,11 +64,23 @@ function loadDeckHistory() {
     opt.textContent = `${deck.name} (${new Date(deck.timestamp).toLocaleDateString()})`;
     select.appendChild(opt);
   }
+  // Auto-load most recent deck
+  if (history.length > 0) {
+    const latest = history[0];
+    document.getElementById('deck-input').value = latest.text;
+    document.getElementById('deck-name-input').value = latest.name;
+    select.value = String(latest.timestamp);
+  }
 }
 
 document.getElementById('deck-history-select').addEventListener('change', (e) => {
   const ts = parseInt(e.target.value, 10);
-  if (!ts) return;
+  if (!ts) {
+    // "新しいデッキ" selected — clear fields
+    document.getElementById('deck-input').value = '';
+    document.getElementById('deck-name-input').value = '';
+    return;
+  }
   const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
   const deck = history.find(d => d.timestamp === ts);
   if (deck) {
@@ -86,12 +98,11 @@ function initLobby() {
     joinGame(peerParam).then(() => {
       connectionStatus.textContent = t('connection.connected');
       createGameBtn.classList.add('hidden');
+      document.getElementById('solo-btn').classList.add('hidden');
       inviteSection.classList.remove('hidden');
       inviteSection.querySelector('p').textContent = t('connection.joinedHost');
       inviteUrlInput.classList.add('hidden');
       copyUrlBtn.classList.add('hidden');
-      deckSection.classList.remove('hidden');
-      loadDeckHistory();
     }).catch((err) => {
       createGameBtn.textContent = t('connection.failed');
       connectionStatus.textContent = `${t('connection.error')} ${err}`;
@@ -106,6 +117,7 @@ function initLobby() {
       inviteUrlInput.value = inviteUrl;
       inviteSection.classList.remove('hidden');
       createGameBtn.classList.add('hidden');
+      document.getElementById('solo-btn').classList.add('hidden');
     });
   }
 }
@@ -120,9 +132,7 @@ copyUrlBtn.addEventListener('click', () => {
 
 // Show deck section when peer connects (for host)
 setOnConnected(() => {
-  deckSection.classList.remove('hidden');
   connectionStatus.textContent = t('connection.connected');
-  loadDeckHistory();
 });
 
 // ===== Deck Loading =====
@@ -164,9 +174,13 @@ loadDeckBtn.addEventListener('click', async () => {
     mySideboardCards = sbCards;
     myDeckReady = true;
 
-    // Save to deck history
+    // Save to deck history (update existing if same name, else add new)
     const deckName = document.getElementById('deck-name-input').value.trim() || 'Unnamed';
     const deckHistory = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
+    const existingIdx = deckHistory.findIndex(d => d.name === deckName);
+    if (existingIdx >= 0) {
+      deckHistory.splice(existingIdx, 1);
+    }
     deckHistory.unshift({ name: deckName, text, timestamp: Date.now() });
     if (deckHistory.length > 20) deckHistory.length = 20;
     try { localStorage.setItem('mtg-deck-history', JSON.stringify(deckHistory)); } catch (e) { /* storage full */ }
@@ -181,9 +195,12 @@ loadDeckBtn.addEventListener('click', async () => {
       } else {
         waitingOpponent.classList.remove('hidden');
       }
-    } else {
+    } else if (peerParam) {
       sendMessage({ type: 'load_deck', payload: { cards, sideboard: sbCards } });
       waitingOpponent.classList.remove('hidden');
+    } else {
+      // No mode selected yet — deck is pre-loaded, re-enable button
+      loadDeckBtn.disabled = false;
     }
   } catch (err) {
     deckStatus.textContent = tf('deck.error', { msg: err.message });
@@ -202,9 +219,30 @@ document.getElementById('deck-file-input').addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = (ev) => {
     document.getElementById('deck-input').value = ev.target.result;
+    // Set deck name from filename
+    let name = file.name.replace(/\.[^.]+$/, ''); // remove extension
+    name = name.replace(/^Deck\s*-\s*/i, '');     // remove "Deck - " prefix
+    document.getElementById('deck-name-input').value = name;
   };
   reader.readAsText(file);
   e.target.value = '';
+});
+
+// ===== Clear Input =====
+document.getElementById('deck-clear-btn').addEventListener('click', () => {
+  document.getElementById('deck-input').value = '';
+  document.getElementById('deck-name-input').value = '';
+  document.getElementById('deck-history-select').value = '';
+});
+
+// ===== Clipboard Import =====
+document.getElementById('deck-clipboard-btn').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('deck-input').value = text;
+  } catch (err) {
+    deckStatus.textContent = t('deck.error', { msg: err.message });
+  }
 });
 
 // ===== Message Handling =====
@@ -293,12 +331,73 @@ function endGame() {
   gameScreen.classList.add('hidden');
   lobby.classList.remove('hidden');
 
+  createGameBtn.classList.remove('hidden');
+  createGameBtn.disabled = false;
+  createGameBtn.textContent = t('lobby.createGame');
+  document.getElementById('solo-btn').classList.remove('hidden');
+  inviteSection.classList.add('hidden');
+
   loadDeckBtn.disabled = false;
   deckStatus.textContent = '';
   waitingOpponent.classList.add('hidden');
   deckInput.value = '';
   document.getElementById('chat-log').innerHTML = '';
+  loadDeckHistory();
 }
+
+// ===== Play Log Toggle =====
+const logPanel = document.getElementById('log-panel');
+const logShowBtn = document.getElementById('log-show-btn');
+
+document.getElementById('log-toggle-btn').addEventListener('click', () => {
+  logPanel.classList.add('hidden-log');
+  logShowBtn.style.display = 'block';
+});
+
+logShowBtn.addEventListener('click', () => {
+  logPanel.classList.remove('hidden-log');
+  logShowBtn.style.display = 'none';
+});
+
+// ===== Keyboard Shortcuts =====
+function isModalOpen() {
+  return ['zone-viewer', 'token-modal', 'dice-modal', 'scry-viewer', 'search-viewer', 'reveal-modal', 'counter-modal', 'note-modal']
+    .some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!gameScreen || gameScreen.classList.contains('hidden')) return;
+  if (isModalOpen()) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch (e.key) {
+    case 'F2':
+    case '1':
+      e.preventDefault();
+      sendAction('pass_priority', {});
+      break;
+    case 'F6':
+    case '6':
+      e.preventDefault();
+      sendAction('next_turn', {});
+      break;
+    case 'd':
+    case 'D':
+      sendAction('draw', { count: 1 });
+      playDraw();
+      break;
+    case 's':
+    case 'S':
+      sendAction('shuffle', {});
+      addSystemMessage(t('system.shuffled'));
+      playShuffle();
+      break;
+    case 'u':
+    case 'U':
+      sendAction('untap_all', {});
+      break;
+  }
+});
 
 // ===== Turn/Phase Buttons =====
 document.getElementById('next-turn-btn').addEventListener('click', () => {

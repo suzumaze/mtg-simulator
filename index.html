@@ -30,13 +30,19 @@
     </div>
 
     <!-- Deck Input (shown after connection) -->
-    <div id="deck-section" class="hidden">
+    <div id="deck-section">
       <h2 data-i18n="lobby.deckList">デッキリスト</h2>
       <div id="deck-history-section">
         <select id="deck-history-select">
           <option value="" data-i18n="deck.newDeck">新しいデッキ</option>
         </select>
         <input type="text" id="deck-name-input" data-i18n-placeholder="deck.deckNamePlaceholder" placeholder="デッキ名">
+      </div>
+      <div class="deck-input-helpers">
+        <input type="file" id="deck-file-input" accept=".txt" class="hidden">
+        <button id="deck-file-btn" class="helper-btn" data-i18n="deck.fromFile">ファイルから入力</button>
+        <button id="deck-clipboard-btn" class="helper-btn" data-i18n="deck.fromClipboard">クリップボードから入力</button>
+        <button id="deck-clear-btn" class="helper-btn" data-i18n="deck.clear">クリア</button>
       </div>
       <textarea id="deck-input" rows="15" placeholder="4 Lightning Bolt
 4 Mountain
@@ -50,8 +56,6 @@ Sideboard:
       </label>
       <div class="deck-buttons">
         <button id="load-deck-btn" data-i18n="lobby.loadDeck">デッキを読み込む</button>
-        <input type="file" id="deck-file-input" accept=".txt" class="hidden">
-        <button id="deck-file-btn" data-i18n="deck.loadFile">ファイルを読み込む</button>
       </div>
       <div id="deck-status"></div>
       <div id="waiting-opponent" class="hidden" data-i18n="lobby.waitingOpponent">相手のデッキ準備を待っています...</div>
@@ -60,6 +64,7 @@ Sideboard:
 
   <!-- Game Screen -->
   <div id="game" class="hidden">
+    <div id="game-main">
     <!-- Opponent Info Bar -->
     <div id="opponent-info" class="player-info">
       <span class="player-name" id="opponent-name">Opponent</span>
@@ -82,16 +87,6 @@ Sideboard:
       <div id="opponent-exile-zone" class="zone-small" data-zone="exile" data-player="opponent">
         <span class="zone-label"><span data-i18n="game.exile">Exile:</span> <span id="opponent-exile-count">0</span></span>
       </div>
-    </div>
-
-    <!-- Turn/Phase Bar (center divider) -->
-    <div id="turn-phase-bar">
-      <span id="turn-counter"></span>
-      <span id="active-player-display"></span>
-      <div id="phase-display"></div>
-      <button id="pass-priority-btn" data-i18n="turn.passPriority">優先権パス</button>
-      <span id="priority-indicator"></span>
-      <button id="next-turn-btn" data-i18n="turn.nextTurn">次のターン</button>
     </div>
 
     <!-- My Battlefield -->
@@ -138,13 +133,32 @@ Sideboard:
           <button id="mute-btn">🔊</button>
         </div>
       </div>
-      <div id="chat-panel">
-        <div id="chat-log"></div>
-      </div>
+    </div>
+
+    <!-- Turn/Phase Bar (above hand) -->
+    <div id="turn-phase-bar">
+      <span id="turn-counter"></span>
+      <span id="active-player-display"></span>
+      <div id="phase-display"></div>
+      <button id="pass-priority-btn" data-i18n="turn.passPriority">優先権パス</button>
+      <span id="priority-indicator"></span>
+      <button id="next-turn-btn" data-i18n="turn.nextTurn">次のターン</button>
     </div>
 
     <!-- My Hand -->
     <div id="my-hand" class="zone hand" data-zone="hand" data-player="self">
+    </div>
+    </div><!-- /game-main -->
+
+    <button id="log-show-btn" data-i18n="game.log">Log</button>
+
+    <!-- Play Log (right side) -->
+    <div id="log-panel">
+      <div id="log-header">
+        <span data-i18n="game.log">Log</span>
+        <button id="log-toggle-btn">✕</button>
+      </div>
+      <div id="chat-log"></div>
     </div>
 
     <!-- Zone Viewer Modal -->

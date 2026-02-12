@@ -1,6 +1,8 @@
 // Drag & drop handling for card movement between zones
 
-import { sendAction } from './game.js';
+import { sendAction, getState } from './game.js';
+import { playPlace } from './sound.js';
+import { addSystemMessage } from './board.js';
 
 const dropZoneMap = {
   'my-battlefield': 'battlefield',
@@ -40,7 +42,11 @@ export function initDragDrop() {
       if (!cardId || !fromZone) return;
       if (fromZone === zoneName) return; // No-op if same zone
 
+      const cardData = getState()?.cards?.[cardId];
+      const cardName = cardData?.name || cardId;
       sendAction('move_card', { cardId, from: fromZone, to: zoneName });
+      addSystemMessage(`${cardName}: ${fromZone} → ${zoneName}`);
+      playPlace();
     });
   }
 }

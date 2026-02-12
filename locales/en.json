@@ -30,6 +30,9 @@
     "error": "Error: {msg}",
     "firstPrint": "Use first printing images",
     "loadFile": "Load File",
+    "fromFile": "From File",
+    "fromClipboard": "From Clipboard",
+    "clear": "Clear",
     "newDeck": "New Deck",
     "deckNamePlaceholder": "Deck name"
   },
@@ -52,6 +55,7 @@
     "coin": "Coin",
     "untapAll": "Untap All",
     "close": "Close",
+    "log": "Log",
     "endGame": "End Game",
     "endGameConfirm": "End the game?"
   },

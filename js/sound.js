@@ -64,3 +64,8 @@ export function playCoin() {
   playTone(1200, 0.12, 'sine', 0.1);
   setTimeout(() => playTone(1600, 0.08, 'sine', 0.08), 80);
 }
+
+export function playPlace() {
+  playTone(250, 0.08, 'triangle', 0.1);
+  setTimeout(() => playTone(400, 0.06, 'sine', 0.06), 30);
+}

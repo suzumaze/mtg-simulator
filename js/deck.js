@@ -7,7 +7,7 @@ export function parseDeckList(text) {
   let inSideboard = false;
 
   for (const line of lines) {
-    const trimmed = line.replace(/\u3000/g, ' ').trim();
+    const trimmed = line.replace(/\u3000/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").trim();
 
     // Empty line after main deck starts sideboard (MTGO format)
     if (!trimmed) {
@@ -115,7 +115,6 @@ async function fetchCardsBulk(names, cardDataMap, dir, totalCount, cachedCount, 
       onProgress(Math.round((done / totalCount) * 100));
     }
 
-    // Rate limit between batches
     if (batch + BATCH_SIZE < names.length) {
       await new Promise(r => setTimeout(r, 100));
     }
