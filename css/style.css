@@ -6,8 +6,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  background: #f5f5f5;
+  color: #333;
   overflow: hidden;
   height: 100vh;
 }
@@ -26,16 +26,23 @@ body {
 #solo-btn {
   padding: 10px 32px;
   font-size: 1rem;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
 }
 
-#solo-btn:hover {
-  background: #1a4a80;
+#solo-btn:hover:not(:disabled) {
+  background: #ddd;
+}
+
+#solo-btn:disabled {
+  background: #eee;
+  color: #aaa;
+  border-color: #ddd;
+  cursor: default;
 }
 
 /* ===== Lobby ===== */
@@ -46,11 +53,14 @@ body {
   justify-content: center;
   min-height: 100vh;
   gap: 20px;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
 }
 
 #lobby h1 {
   font-size: 2rem;
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 #connection-section {
@@ -61,7 +71,7 @@ body {
   padding: 12px 32px;
   font-size: 1.1rem;
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -80,17 +90,17 @@ body {
   width: 400px;
   padding: 8px;
   font-size: 0.9rem;
-  background: #16213e;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
 }
 
 #copy-url-btn {
   padding: 8px 16px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
   margin-left: 4px;
@@ -108,7 +118,7 @@ body {
 
 #deck-section h2 {
   margin-bottom: 8px;
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 #deck-history-section {
@@ -120,9 +130,9 @@ body {
 
 #deck-history-select {
   padding: 6px;
-  background: #16213e;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 0.85rem;
   max-width: 200px;
@@ -130,9 +140,9 @@ body {
 
 #deck-name-input {
   padding: 6px;
-  background: #16213e;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 0.85rem;
   width: 150px;
@@ -143,9 +153,9 @@ body {
   padding: 8px;
   font-size: 0.85rem;
   font-family: monospace;
-  background: #16213e;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   resize: vertical;
 }
@@ -169,11 +179,17 @@ body {
 #load-deck-btn {
   padding: 10px 24px;
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
+}
+
+#load-deck-btn:disabled {
+  background: #ddd;
+  color: #999;
+  cursor: default;
 }
 
 .deck-input-helpers {
@@ -188,15 +204,15 @@ body {
   padding: 4px 10px;
   background: transparent;
   color: #888;
-  border: 1px solid #444;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.75rem;
 }
 
 .helper-btn:hover {
-  color: #e0e0e0;
-  border-color: #888;
+  color: #333;
+  border-color: #999;
 }
 
 #deck-status {
@@ -213,6 +229,66 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* Deck Preview (fullscreen background) */
+#deck-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+#deck-preview .preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+#deck-preview .preview-sb-label {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+  margin-top: 4px;
+}
+
+#deck-preview .preview-card {
+  position: relative;
+  width: 130px;
+  height: 182px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#deck-preview .preview-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#deck-preview .preview-card .preview-count {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 /* ===== Game Screen ===== */
@@ -235,14 +311,14 @@ body {
   align-items: center;
   gap: 16px;
   padding: 4px 12px;
-  background: #16213e;
+  background: #f0f0f0;
   font-size: 0.85rem;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #ddd;
 }
 
 .player-name {
   font-weight: bold;
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 .life-display, .poison-display {
@@ -252,8 +328,8 @@ body {
 #end-game-btn {
   margin-left: auto;
   padding: 2px 10px;
-  background: #8b0000;
-  color: #e0e0e0;
+  background: #c44;
+  color: #fff;
   border: none;
   border-radius: 3px;
   cursor: pointer;
@@ -261,7 +337,7 @@ body {
 }
 
 #end-game-btn:hover {
-  background: #a00;
+  background: #a33;
 }
 
 /* Turn/Phase Bar */
@@ -270,7 +346,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 3px 12px;
-  background: #12192e;
+  background: #f0f0f0;
   border-top: 1px solid #c9a227;
   font-size: 0.75rem;
   flex-shrink: 0;
@@ -279,15 +355,15 @@ body {
 
 #turn-counter {
   font-weight: bold;
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 #active-player-display {
-  color: #aaa;
+  color: #888;
 }
 
 #priority-indicator {
-  color: #8f8;
+  color: #2a2;
 }
 
 #phase-display {
@@ -298,8 +374,8 @@ body {
 
 .phase-pill {
   padding: 2px 6px;
-  background: #0f1a2e;
-  border: 1px solid #333;
+  background: #e8e8e8;
+  border: 1px solid #ccc;
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.65rem;
@@ -307,33 +383,33 @@ body {
 }
 
 .phase-pill:hover {
-  background: #1a2a45;
+  background: #ddd;
 }
 
 .phase-pill.active-phase {
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   border-color: #c9a227;
   font-weight: bold;
 }
 
 #next-turn-btn, #pass-priority-btn {
   padding: 2px 8px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.7rem;
 }
 
 #next-turn-btn:hover, #pass-priority-btn:hover {
-  background: #1a4a80;
+  background: #ddd;
 }
 
 #pass-priority-btn.my-priority {
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   font-weight: bold;
 }
 
@@ -358,16 +434,16 @@ body {
 }
 
 #opponent-battlefield {
-  background: #1e2a45;
+  background: #e8ece0;
   border-bottom: 2px solid #c9a227;
 }
 
 #my-battlefield {
-  background: #1a2840;
+  background: #dde4d6;
 }
 
 .battlefield.drag-over {
-  background: #2a3a55;
+  background: #d0d8c8;
 }
 
 /* Zone Row (GY/Exile) */
@@ -378,17 +454,17 @@ body {
 }
 
 .zone-small {
-  padding: 4px 8px;
-  background: #16213e;
-  border: 1px solid #333;
-  font-size: 0.8rem;
+  padding: 2px 6px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  font-size: 0.7rem;
   cursor: pointer;
-  min-width: 80px;
+  min-width: 50px;
   position: relative;
 }
 
 .zone-small:hover {
-  background: #1e2a45;
+  background: #e8e8e8;
 }
 
 .zone-label {
@@ -400,8 +476,8 @@ body {
   display: flex;
   gap: 2px;
   flex-shrink: 0;
-  background: #16213e;
-  border-top: 1px solid #333;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
   max-height: 100px;
 }
 
@@ -427,16 +503,16 @@ body {
 
 .life-btn, .poison-btn {
   padding: 2px 8px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.8rem;
 }
 
 .life-btn:hover, .poison-btn:hover {
-  background: #1a4a80;
+  background: #ddd;
 }
 
 .action-buttons {
@@ -447,16 +523,16 @@ body {
 
 .action-buttons button {
   padding: 3px 8px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.75rem;
 }
 
 .action-buttons button:hover {
-  background: #1a4a80;
+  background: #ddd;
 }
 
 /* Play Log Panel (right side) */
@@ -465,8 +541,8 @@ body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #333;
-  background: #12192e;
+  border-left: 1px solid #ddd;
+  background: #fafafa;
   transition: width 0.2s ease;
 }
 
@@ -481,10 +557,10 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #ddd;
   font-size: 0.8rem;
   font-weight: bold;
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 #log-toggle-btn {
@@ -497,7 +573,7 @@ body {
 }
 
 #log-toggle-btn:hover {
-  color: #e0e0e0;
+  color: #333;
 }
 
 #chat-log {
@@ -520,10 +596,10 @@ body {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  background: #12192e;
-  border: 1px solid #333;
+  background: #fafafa;
+  border: 1px solid #ddd;
   border-right: none;
-  color: #c9a227;
+  color: #5b4a1a;
   padding: 8px 4px;
   cursor: pointer;
   font-size: 0.7rem;
@@ -539,14 +615,14 @@ body {
   display: flex;
   gap: 4px;
   padding: 6px;
-  background: #0f1a2e;
+  background: #eee;
   overflow-x: auto;
   min-height: 130px;
   align-items: flex-end;
 }
 
 .hand.drag-over {
-  background: #1a2a3e;
+  background: #e0e0e0;
 }
 
 /* ===== Cards ===== */
@@ -554,13 +630,13 @@ body {
   width: 100px;
   height: 140px;
   border-radius: 6px;
-  border: 2px solid #555;
+  border: 2px solid #bbb;
   overflow: hidden;
   cursor: grab;
   position: relative;
   flex-shrink: 0;
   transition: transform 0.1s;
-  background: #2a2a3e;
+  background: #e0e0e0;
 }
 
 .card:hover {
@@ -578,7 +654,7 @@ body {
 }
 
 .card.face-down {
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><rect fill="%23223" width="100" height="140"/><text x="50" y="70" fill="%23666" text-anchor="middle" font-size="12">MTG</text></svg>');
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><rect fill="%23556" width="100" height="140"/><text x="50" y="70" fill="%23999" text-anchor="middle" font-size="12">MTG</text></svg>');
   background-size: cover;
 }
 
@@ -613,7 +689,7 @@ body {
   top: 2px;
   right: 2px;
   background: #c9a227;
-  color: #000;
+  color: #fff;
   font-size: 0.7rem;
   font-weight: bold;
   padding: 1px 4px;
@@ -643,7 +719,7 @@ body {
 .card.token-card .token-name {
   font-size: 0.7rem;
   font-weight: bold;
-  color: #c9a227;
+  color: #5b4a1a;
   margin-bottom: 4px;
 }
 
@@ -687,7 +763,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -695,8 +771,8 @@ body {
 }
 
 #scry-viewer-content {
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
   max-width: 80%;
@@ -721,7 +797,7 @@ body {
 }
 
 .scry-section h4 {
-  color: #c9a227;
+  color: #5b4a1a;
   margin-bottom: 6px;
   font-size: 0.85rem;
 }
@@ -732,7 +808,7 @@ body {
   gap: 4px;
   min-height: 60px;
   padding: 4px;
-  border: 1px dashed #444;
+  border: 1px dashed #ccc;
   border-radius: 4px;
 }
 
@@ -744,7 +820,7 @@ body {
   margin-top: 12px;
   padding: 8px 24px;
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -758,7 +834,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -766,8 +842,8 @@ body {
 }
 
 #search-viewer-content {
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
   max-width: 85%;
@@ -784,9 +860,9 @@ body {
 #search-viewer-close {
   margin-top: 12px;
   padding: 6px 16px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -798,7 +874,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -806,8 +882,8 @@ body {
 }
 
 #reveal-modal-content {
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
   max-width: 60%;
@@ -822,9 +898,9 @@ body {
 
 #reveal-modal-close {
   padding: 6px 16px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -838,9 +914,9 @@ body {
 
 .counter-type-btn {
   padding: 4px 10px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
@@ -848,7 +924,7 @@ body {
 
 .counter-type-btn.selected {
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
   border-color: #c9a227;
 }
 
@@ -864,12 +940,12 @@ body {
 /* Card Context Menu */
 .card-context-menu {
   position: fixed;
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 4px;
   z-index: 1000;
   min-width: 140px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .card-context-menu div {
@@ -879,7 +955,7 @@ body {
 }
 
 .card-context-menu div:hover {
-  background: #0f3460;
+  background: #f0f0f0;
 }
 
 /* ===== Zone Viewer Modal ===== */
@@ -889,7 +965,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -897,8 +973,8 @@ body {
 }
 
 #zone-viewer-content {
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
   max-width: 80%;
@@ -907,7 +983,7 @@ body {
 }
 
 #zone-viewer-title {
-  color: #c9a227;
+  color: #5b4a1a;
   margin-bottom: 8px;
 }
 
@@ -920,9 +996,9 @@ body {
 #zone-viewer-close {
   margin-top: 12px;
   padding: 6px 16px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -934,7 +1010,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -942,8 +1018,8 @@ body {
 }
 
 .modal-content {
-  background: #16213e;
-  border: 1px solid #444;
+  background: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 20px;
   display: flex;
@@ -952,7 +1028,7 @@ body {
 }
 
 .modal-content h3 {
-  color: #c9a227;
+  color: #5b4a1a;
 }
 
 .modal-content label {
@@ -964,25 +1040,26 @@ body {
 
 .modal-content input {
   padding: 6px;
-  background: #0a0f1e;
-  color: #e0e0e0;
-  border: 1px solid #444;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   width: 120px;
 }
 
 .modal-content button {
   padding: 6px 16px;
-  background: #0f3460;
-  color: #e0e0e0;
-  border: none;
+  background: #e8e8e8;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .modal-content button:first-of-type {
   background: #c9a227;
-  color: #1a1a2e;
+  color: #fff;
+  border: none;
 }
 
 /* Card Preview */
@@ -997,7 +1074,7 @@ body {
   pointer-events: none;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
 #card-preview img {
@@ -1012,8 +1089,8 @@ body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  background: #2a2a3e;
-  color: #c9a227;
+  background: #e0e0e0;
+  color: #5b4a1a;
   font-size: 1.2rem;
   font-weight: bold;
   text-align: center;

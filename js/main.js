@@ -14,6 +14,7 @@ setLocale(browserLang).then(() => applyI18nToDOM());
 
 // ===== Solo Mode =====
 document.getElementById('solo-btn').addEventListener('click', () => {
+  if (!myDeckReady) return;
   setSoloMode();
   createGameBtn.classList.add('hidden');
   document.getElementById('solo-btn').classList.add('hidden');
@@ -46,6 +47,8 @@ const deckInput = document.getElementById('deck-input');
 const loadDeckBtn = document.getElementById('load-deck-btn');
 const deckStatus = document.getElementById('deck-status');
 const waitingOpponent = document.getElementById('waiting-opponent');
+const soloBtn = document.getElementById('solo-btn');
+soloBtn.disabled = true;
 
 // ===== Connection (initialized after auth) =====
 const urlParams = new URLSearchParams(location.search);
@@ -56,22 +59,35 @@ loadDeckHistory();
 
 function loadDeckHistory() {
   const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
+  const historySection = document.getElementById('deck-history-section');
   const select = document.getElementById('deck-history-select');
   while (select.options.length > 1) select.remove(1);
-  for (const deck of history) {
-    const opt = document.createElement('option');
-    opt.value = deck.timestamp;
-    opt.textContent = `${deck.name} (${new Date(deck.timestamp).toLocaleDateString()})`;
-    select.appendChild(opt);
-  }
-  // Auto-load most recent deck
-  if (history.length > 0) {
+
+  if (history.length === 0) {
+    historySection.classList.add('hidden');
+  } else {
+    historySection.classList.remove('hidden');
+    for (const deck of history) {
+      const opt = document.createElement('option');
+      opt.value = deck.timestamp;
+      opt.textContent = `${deck.name} (${new Date(deck.timestamp).toLocaleDateString()})`;
+      select.appendChild(opt);
+    }
+    // Auto-load most recent deck
     const latest = history[0];
     document.getElementById('deck-input').value = latest.text;
     document.getElementById('deck-name-input').value = latest.name;
     select.value = String(latest.timestamp);
   }
+  updateLoadBtnState();
 }
+
+// ===== Load Button State =====
+function updateLoadBtnState() {
+  loadDeckBtn.disabled = !deckInput.value.trim();
+  soloBtn.disabled = !myDeckReady;
+}
+deckInput.addEventListener('input', updateLoadBtnState);
 
 document.getElementById('deck-history-select').addEventListener('change', (e) => {
   const ts = parseInt(e.target.value, 10);
@@ -79,6 +95,7 @@ document.getElementById('deck-history-select').addEventListener('change', (e) =>
     // "新しいデッキ" selected — clear fields
     document.getElementById('deck-input').value = '';
     document.getElementById('deck-name-input').value = '';
+    updateLoadBtnState();
     return;
   }
   const history = JSON.parse(localStorage.getItem('mtg-deck-history') || '[]');
@@ -86,6 +103,7 @@ document.getElementById('deck-history-select').addEventListener('change', (e) =>
   if (deck) {
     document.getElementById('deck-input').value = deck.text;
     document.getElementById('deck-name-input').value = deck.name;
+    updateLoadBtnState();
   }
 });
 
@@ -173,6 +191,8 @@ loadDeckBtn.addEventListener('click', async () => {
     myDeckCards = cards;
     mySideboardCards = sbCards;
     myDeckReady = true;
+    updateLoadBtnState();
+    renderDeckPreview(cards, sbCards);
 
     // Save to deck history (update existing if same name, else add new)
     const deckName = document.getElementById('deck-name-input').value.trim() || 'Unnamed';
@@ -223,6 +243,7 @@ document.getElementById('deck-file-input').addEventListener('change', (e) => {
     let name = file.name.replace(/\.[^.]+$/, ''); // remove extension
     name = name.replace(/^Deck\s*-\s*/i, '');     // remove "Deck - " prefix
     document.getElementById('deck-name-input').value = name;
+    updateLoadBtnState();
   };
   reader.readAsText(file);
   e.target.value = '';
@@ -233,6 +254,7 @@ document.getElementById('deck-clear-btn').addEventListener('click', () => {
   document.getElementById('deck-input').value = '';
   document.getElementById('deck-name-input').value = '';
   document.getElementById('deck-history-select').value = '';
+  updateLoadBtnState();
 });
 
 // ===== Clipboard Import =====
@@ -240,6 +262,7 @@ document.getElementById('deck-clipboard-btn').addEventListener('click', async ()
   try {
     const text = await navigator.clipboard.readText();
     document.getElementById('deck-input').value = text;
+    updateLoadBtnState();
   } catch (err) {
     deckStatus.textContent = t('deck.error', { msg: err.message });
   }
@@ -296,6 +319,57 @@ setOnStateChange((eventType, eventData) => {
   renderBoard();
 });
 
+function renderDeckPreview(mainCards, sbCards) {
+  let preview = document.getElementById('deck-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.id = 'deck-preview';
+    document.body.appendChild(preview);
+  }
+  preview.innerHTML = '';
+
+  function groupCards(cards) {
+    const groups = new Map();
+    for (const card of cards) {
+      const g = groups.get(card.name);
+      if (g) { g.count++; } else { groups.set(card.name, { ...card, count: 1 }); }
+    }
+    return groups;
+  }
+
+  function appendRow(groups, container) {
+    const row = document.createElement('div');
+    row.className = 'preview-row';
+    for (const [, card] of groups) {
+      if (!card.imageUrl) continue;
+      const div = document.createElement('div');
+      div.className = 'preview-card';
+      const img = document.createElement('img');
+      img.src = card.imageUrl;
+      img.alt = card.name;
+      div.appendChild(img);
+      if (card.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'preview-count';
+        badge.textContent = `x${card.count}`;
+        div.appendChild(badge);
+      }
+      row.appendChild(div);
+    }
+    container.appendChild(row);
+  }
+
+  appendRow(groupCards(mainCards), preview);
+
+  if (sbCards.length > 0) {
+    const label = document.createElement('div');
+    label.className = 'preview-sb-label';
+    label.textContent = `Sideboard: ${sbCards.length}`;
+    preview.appendChild(label);
+    appendRow(groupCards(sbCards), preview);
+  }
+}
+
 function startGame() {
   initGame(myDeckCards, opponentDeckCards, mySideboardCards, opponentSideboardCards);
 
@@ -306,6 +380,8 @@ function startGame() {
 }
 
 function showGameScreen() {
+  const preview = document.getElementById('deck-preview');
+  if (preview) preview.remove();
   lobby.classList.add('hidden');
   gameScreen.classList.remove('hidden');
   initDragDrop();
@@ -342,6 +418,8 @@ function endGame() {
   waitingOpponent.classList.add('hidden');
   deckInput.value = '';
   document.getElementById('chat-log').innerHTML = '';
+  const preview = document.getElementById('deck-preview');
+  if (preview) preview.innerHTML = '';
   loadDeckHistory();
 }
 

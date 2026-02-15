@@ -14,22 +14,8 @@
   <!-- Lobby Screen -->
   <div id="lobby">
     <h1>MTG Simulator</h1>
-    <div id="connection-section">
-      <div id="host-section">
-        <div class="lobby-buttons">
-          <button id="create-game-btn" data-i18n="lobby.createGame">ゲームを作成</button>
-          <button id="solo-btn" data-i18n="lobby.solo">1人回し</button>
-        </div>
-        <div id="invite-section" class="hidden">
-          <p data-i18n="lobby.shareInvite">招待URLを相手に共有してください:</p>
-          <input type="text" id="invite-url" readonly>
-          <button id="copy-url-btn" data-i18n="lobby.copy">コピー</button>
-          <p id="connection-status" data-i18n="lobby.connectionWaiting">接続待ち...</p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Deck Input (shown after connection) -->
+    <!-- Deck Input -->
     <div id="deck-section">
       <h2 data-i18n="lobby.deckList">デッキリスト</h2>
       <div id="deck-history-section">
@@ -58,6 +44,20 @@ Sideboard:
         <button id="load-deck-btn" data-i18n="lobby.loadDeck">デッキを読み込む</button>
       </div>
       <div id="deck-status"></div>
+    </div>
+
+    <!-- Game Start Buttons (below deck) -->
+    <div id="connection-section">
+      <div class="lobby-buttons">
+        <button id="create-game-btn" data-i18n="lobby.createGame">ゲームを作成</button>
+        <button id="solo-btn" data-i18n="lobby.solo">1人回し</button>
+      </div>
+      <div id="invite-section" class="hidden">
+        <p data-i18n="lobby.shareInvite">招待URLを相手に共有してください:</p>
+        <input type="text" id="invite-url" readonly>
+        <button id="copy-url-btn" data-i18n="lobby.copy">コピー</button>
+        <p id="connection-status" data-i18n="lobby.connectionWaiting">接続待ち...</p>
+      </div>
       <div id="waiting-opponent" class="hidden" data-i18n="lobby.waitingOpponent">相手のデッキ準備を待っています...</div>
     </div>
   </div>
@@ -82,10 +82,10 @@ Sideboard:
     <!-- Opponent GY / Exile -->
     <div class="zone-row">
       <div id="opponent-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="opponent">
-        <span class="zone-label"><span data-i18n="game.graveyard">GY:</span> <span id="opponent-gy-count">0</span></span>
+        <span class="zone-label" title="Graveyard">⚰️ <span id="opponent-gy-count">0</span></span>
       </div>
       <div id="opponent-exile-zone" class="zone-small" data-zone="exile" data-player="opponent">
-        <span class="zone-label"><span data-i18n="game.exile">Exile:</span> <span id="opponent-exile-count">0</span></span>
+        <span class="zone-label" title="Exile">✦ <span id="opponent-exile-count">0</span></span>
       </div>
     </div>
 
@@ -96,16 +96,16 @@ Sideboard:
     <!-- My Zones + Actions + Chat -->
     <div class="bottom-bar">
       <div id="my-graveyard-zone" class="zone-small" data-zone="graveyard" data-player="self">
-        <span class="zone-label"><span data-i18n="game.graveyard">GY:</span> <span id="my-gy-count">0</span></span>
+        <span class="zone-label" title="Graveyard">⚰️ <span id="my-gy-count">0</span></span>
       </div>
       <div id="my-exile-zone" class="zone-small" data-zone="exile" data-player="self">
-        <span class="zone-label"><span data-i18n="game.exile">Exile:</span> <span id="my-exile-count">0</span></span>
+        <span class="zone-label" title="Exile">✦ <span id="my-exile-count">0</span></span>
       </div>
       <div id="my-library-zone" class="zone-small" data-zone="library" data-player="self">
-        <span class="zone-label"><span data-i18n="game.library">Library:</span> <span id="my-library-count">0</span></span>
+        <span class="zone-label" title="Library">📚 <span id="my-library-count">0</span></span>
       </div>
       <div id="my-sideboard-zone" class="zone-small" data-zone="sideboard" data-player="self">
-        <span class="zone-label"><span data-i18n="game.sideboard">SB:</span> <span id="my-sb-count">0</span></span>
+        <span class="zone-label" title="Sideboard">📋 <span id="my-sb-count">0</span></span>
       </div>
       <div id="actions-panel">
         <div class="life-controls">
