@@ -267,13 +267,20 @@ export function processAction(role, type, payload) {
       break;
     }
     case 'mulligan': {
-      // Return hand to library, shuffle, draw N
+      // London mulligan: always draw 7
       player.library.push(...player.hand);
       player.hand = [];
       shuffle(player.library);
-      const drawCount = payload.count || 7;
-      drawCards(role, drawCount);
-      broadcastAction(role, type, { count: drawCount });
+      drawCards(role, 7);
+      broadcastAction(role, type, { count: 7 });
+      break;
+    }
+    case 'mulligan_bottom': {
+      // Put selected cards on bottom of library
+      const { cardIds } = payload;
+      player.hand = player.hand.filter(id => !cardIds.includes(id));
+      player.library.push(...cardIds);
+      broadcastAction(role, type, { count: cardIds.length });
       break;
     }
     case 'untap_all': {
@@ -552,8 +559,5 @@ export function getLibraryTop(count) {
 }
 
 export function mulliganCount() {
-  const player = getMyPlayer();
-  if (!player) return 7;
-  // Standard: each mulligan draws one fewer
-  return Math.max(1, 7 - (player._mulliganCount || 0));
+  return 7;
 }

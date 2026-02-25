@@ -3,7 +3,7 @@
 import { createGame, joinGame, sendMessage, setOnMessage, setOnConnected, getIsHost, getIsSolo, setSoloMode } from './connection.js';
 import { parseDeckList, fetchCards, buildDeck } from './deck.js';
 import { initGame, sendAction, handleMessage, setOnStateChange, getState, getMyPlayer, getOpponentPlayer, getLibraryTop, resetGameState } from './game.js';
-import { renderBoard, renderZoneViewer, closeZoneViewer, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget } from './board.js';
+import { renderBoard, renderZoneViewer, closeZoneViewer, addSystemMessage, openScryViewer, getScryResult, closeScryViewer, openSearchViewer, closeSearchViewer, showRevealModal, closeRevealModal, getCounterTargetCardId, resetCounterTarget, getNoteTargetCardId, resetNoteTarget, openMulliganBottomViewer, getMulliganBottomResult, closeMulliganBottomViewer } from './board.js';
 import { initDragDrop } from './drag.js';
 import { playTap, playDraw, playShuffle, playLifeChange, playDice, playCoin, toggleMute, isMuted } from './sound.js';
 import { setLocale, applyI18nToDOM, t, tf } from './i18n.js';
@@ -403,6 +403,7 @@ function endGame() {
   myDeckReady = false;
   opponentDeckReady = false;
   mulliganCount = 0;
+  document.getElementById('keep-btn').classList.add('hidden');
 
   gameScreen.classList.add('hidden');
   lobby.classList.remove('hidden');
@@ -500,10 +501,25 @@ document.getElementById('shuffle-btn').addEventListener('click', () => {
 
 document.getElementById('mulligan-btn').addEventListener('click', () => {
   mulliganCount++;
-  const drawCount = Math.max(1, 7 - mulliganCount + 1);
-  sendAction('mulligan', { count: drawCount });
-  addSystemMessage(tf('system.mulligan', { count: drawCount }));
+  sendAction('mulligan', { count: 7 });
+  addSystemMessage(tf('system.mulligan', { count: mulliganCount }));
+  document.getElementById('keep-btn').classList.remove('hidden');
   playShuffle();
+});
+
+document.getElementById('keep-btn').addEventListener('click', () => {
+  if (mulliganCount > 0) {
+    openMulliganBottomViewer(mulliganCount);
+  }
+  document.getElementById('keep-btn').classList.add('hidden');
+});
+
+document.getElementById('mulligan-bottom-confirm-btn').addEventListener('click', () => {
+  const cardIds = getMulliganBottomResult();
+  sendAction('mulligan_bottom', { cardIds });
+  addSystemMessage(tf('system.mulliganBottom', { count: cardIds.length }));
+  closeMulliganBottomViewer();
+  mulliganCount = 0;
 });
 
 document.getElementById('untap-all-btn').addEventListener('click', () => {

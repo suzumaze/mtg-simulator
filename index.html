@@ -124,6 +124,7 @@ Sideboard:
           <button id="draw-btn" data-i18n="game.draw">ドロー</button>
           <button id="shuffle-btn" data-i18n="game.shuffle">シャッフル</button>
           <button id="mulligan-btn" data-i18n="game.mulligan">マリガン</button>
+          <button id="keep-btn" class="hidden" data-i18n="game.keep">キープ</button>
           <button id="scry-btn" data-i18n="game.scry">Scry</button>
           <button id="search-btn" data-i18n="game.search">検索</button>
           <button id="token-btn" data-i18n="game.token">トークン</button>
@@ -217,6 +218,16 @@ Sideboard:
           </div>
         </div>
         <button id="scry-confirm-btn" data-i18n="modal.scry.done">確定</button>
+      </div>
+    </div>
+
+    <!-- Mulligan Bottom Viewer -->
+    <div id="mulligan-bottom-viewer" class="hidden">
+      <div id="mulligan-bottom-viewer-content">
+        <h3 id="mulligan-bottom-title"></h3>
+        <p class="scry-hint" data-i18n="modal.mulligan.hint">ボトムに送るカードをクリックで選択</p>
+        <div id="mulligan-bottom-cards" class="scry-card-list"></div>
+        <button id="mulligan-bottom-confirm-btn" data-i18n="modal.mulligan.confirm" disabled>確定</button>
       </div>
     </div>
 

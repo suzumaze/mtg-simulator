@@ -556,6 +556,82 @@ export function closeScryViewer() {
   scryBottomCards = [];
 }
 
+// --- Mulligan Bottom Viewer ---
+let mulliganBottomSelected = [];
+let mulliganBottomRequired = 0;
+
+export function openMulliganBottomViewer(count) {
+  mulliganBottomSelected = [];
+  mulliganBottomRequired = count;
+  const state = getState();
+  const player = getMyPlayer();
+  if (!state || !player) return;
+
+  const titleEl = document.getElementById('mulligan-bottom-title');
+  titleEl.textContent = tf('modal.mulligan.title', { count });
+
+  renderMulliganBottomViewer(player.hand, state.cards);
+  document.getElementById('mulligan-bottom-viewer').classList.remove('hidden');
+}
+
+function renderMulliganBottomViewer(handIds, cards) {
+  const container = document.getElementById('mulligan-bottom-cards');
+  container.innerHTML = '';
+
+  for (const cardId of handIds) {
+    const cardData = cards[cardId];
+    if (!cardData) continue;
+
+    const el = document.createElement('div');
+    el.className = 'card scry-card';
+    if (mulliganBottomSelected.includes(cardId)) {
+      el.classList.add('selected-for-bottom');
+    }
+    el.dataset.cardId = cardId;
+
+    if (cardData.imageUrl) {
+      const img = document.createElement('img');
+      img.className = 'card-image';
+      img.src = cardData.imageUrl;
+      img.alt = cardData.name;
+      el.appendChild(img);
+    }
+
+    const nameOverlay = document.createElement('div');
+    nameOverlay.className = 'card-name-overlay';
+    nameOverlay.style.display = 'block';
+    nameOverlay.textContent = cardData.name;
+    el.appendChild(nameOverlay);
+
+    el.addEventListener('click', () => {
+      const idx = mulliganBottomSelected.indexOf(cardId);
+      if (idx !== -1) {
+        mulliganBottomSelected.splice(idx, 1);
+      } else if (mulliganBottomSelected.length < mulliganBottomRequired) {
+        mulliganBottomSelected.push(cardId);
+      }
+      const state = getState();
+      const player = getMyPlayer();
+      if (state && player) renderMulliganBottomViewer(player.hand, state.cards);
+    });
+
+    container.appendChild(el);
+  }
+
+  const btn = document.getElementById('mulligan-bottom-confirm-btn');
+  btn.disabled = mulliganBottomSelected.length !== mulliganBottomRequired;
+}
+
+export function getMulliganBottomResult() {
+  return [...mulliganBottomSelected];
+}
+
+export function closeMulliganBottomViewer() {
+  document.getElementById('mulligan-bottom-viewer').classList.add('hidden');
+  mulliganBottomSelected = [];
+  mulliganBottomRequired = 0;
+}
+
 // --- Library Search Viewer ---
 export function openSearchViewer(cardIds, cards) {
   const viewer = document.getElementById('search-viewer');

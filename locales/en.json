@@ -48,6 +48,7 @@
     "draw": "Draw",
     "shuffle": "Shuffle",
     "mulligan": "Mulligan",
+    "keep": "Keep",
     "scry": "Scry",
     "search": "Search",
     "token": "Token",
@@ -129,6 +130,11 @@
       "customPlaceholder": "Type name",
       "close": "Close"
     },
+    "mulligan": {
+      "title": "Put {count} card(s) on bottom",
+      "hint": "Click cards to select for bottom",
+      "confirm": "Confirm"
+    },
     "note": {
       "title": "Note",
       "placeholder": "Enter annotation...",
@@ -157,7 +163,8 @@
   },
   "system": {
     "shuffled": "Library shuffled",
-    "mulligan": "Mulligan: draw {count}",
+    "mulligan": "Mulligan ({count})",
+    "mulliganBottom": "Put {count} card(s) on bottom",
     "revealCard": "Revealed: {name}",
     "searchLibrary": "Searched library",
     "scryResolved": "Scry {total}: {top} to top, {bottom} to bottom",

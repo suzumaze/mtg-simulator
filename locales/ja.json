@@ -48,6 +48,7 @@
     "draw": "ドロー",
     "shuffle": "シャッフル",
     "mulligan": "マリガン",
+    "keep": "キープ",
     "scry": "Scry",
     "search": "検索",
     "token": "トークン",
@@ -129,6 +130,11 @@
       "customPlaceholder": "種別名",
       "close": "閉じる"
     },
+    "mulligan": {
+      "title": "{count}枚をボトムに送る",
+      "hint": "ボトムに送るカードをクリックで選択",
+      "confirm": "確定"
+    },
     "note": {
       "title": "メモ",
       "placeholder": "注釈を入力...",
@@ -157,7 +163,8 @@
   },
   "system": {
     "shuffled": "ライブラリーをシャッフルしました",
-    "mulligan": "マリガン: {count}枚ドロー",
+    "mulligan": "マリガン ({count}回目)",
+    "mulliganBottom": "{count}枚をボトムに送りました",
     "revealCard": "カードを公開: {name}",
     "searchLibrary": "ライブラリーを検索しました",
     "scryResolved": "Scry {total}: トップ{top}枚, ボトム{bottom}枚",
